@@ -82,6 +82,8 @@ public:
         else if (value >= 0.0625) value = value * 160.0 - 70.0;
         else if (value >= 0.0)    value = value * 480.0 - 90.0;  // min dB value: -90 or -oo
 
+        value = volToNormalized(DB2VAL(value));
+
         widget_->SetIncomingMessageTime(GetTickCount());
         widget_->GetZoneManager()->DoAction(widget_, value);
     }
@@ -100,6 +102,8 @@ public:
     virtual void ForceValue(const PropertyList &properties, double value) override
     {
         lastDoubleValue_ = value;
+
+        value = VAL2DB(normalizedToVol(value));
 
         if      (value < -60.0) value = (value + 90.0) / 480.0;
         else if (value < -30.0) value = (value + 70.0) / 160.0;
