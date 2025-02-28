@@ -483,10 +483,10 @@ void Midi_ControlSurface::ProcessMidiWidget(int &lineNumber, ifstream &surfaceTe
         MIDI_event_ex_t *message1 = NULL;
         MIDI_event_ex_t *message2 = NULL;
 
-        int oneByteKey = 0;
-        int twoByteKey = 0;
-        int threeByteKey = 0;
-        int threeByteKeyMsg2 = 0;
+        string oneByteKey = "";
+        string twoByteKey = "";
+        string threeByteKey = "";
+        string threeByteKeyMsg2 = "";
         
         if (size > 3)
         {
@@ -494,9 +494,9 @@ void Midi_ControlSurface::ProcessMidiWidget(int &lineNumber, ifstream &surfaceTe
             
             if (message1)
             {
-                oneByteKey = message1->midi_message[0] * 0x10000;
-                twoByteKey = message1->midi_message[0] * 0x10000 + message1->midi_message[1] * 0x100;
-                threeByteKey = message1->midi_message[0] * 0x10000 + message1->midi_message[1] * 0x100 + message1->midi_message[2];
+                oneByteKey = to_string(message1->midi_message[0] * 0x10000);
+                twoByteKey = to_string(message1->midi_message[0] * 0x10000 + message1->midi_message[1] * 0x100);
+                threeByteKey = to_string(message1->midi_message[0] * 0x10000 + message1->midi_message[1] * 0x100 + message1->midi_message[2]);
             }
         }
         if (size > 6)
@@ -504,39 +504,39 @@ void Midi_ControlSurface::ProcessMidiWidget(int &lineNumber, ifstream &surfaceTe
             message2 = new MIDI_event_ex_t(strToHex(tokenLines[i][4]), strToHex(tokenLines[i][5]), strToHex(tokenLines[i][6]));
             
             if (message2)
-                threeByteKeyMsg2 = message2->midi_message[0] * 0x10000 + message2->midi_message[1] * 0x100 + message2->midi_message[2];
+                threeByteKeyMsg2 = to_string(message2->midi_message[0] * 0x10000 + message2->midi_message[1] * 0x100 + message2->midi_message[2]);
         }
-        // Control Signal Generators
         
+        // Generators
         if (widgetType == "AnyPress" && (size == 4 || size == 7) && message1)
-            AddCSIMessageGenerator(twoByteKey, new AnyPress_Midi_CSIMessageGenerator(csi_, widget, message1));
+            CSIMessageGeneratorsByMessage_.insert(make_pair(twoByteKey, make_unique<AnyPress_Midi_CSIMessageGenerator>(csi_, widget, message1)));
         else if (widgetType == "Press" && size == 4 && message1)
-            AddCSIMessageGenerator(threeByteKey, new PressRelease_Midi_CSIMessageGenerator(csi_, widget, message1));
+            CSIMessageGeneratorsByMessage_.insert(make_pair(threeByteKey, make_unique<PressRelease_Midi_CSIMessageGenerator>(csi_, widget, message1)));
         else if (widgetType == "Press" && size == 7 && message1 && message2)
         {
-            AddCSIMessageGenerator(threeByteKey, new PressRelease_Midi_CSIMessageGenerator(csi_, widget, message1, message2));
-            AddCSIMessageGenerator(threeByteKeyMsg2, new PressRelease_Midi_CSIMessageGenerator(csi_, widget, message1, message2));
+            CSIMessageGeneratorsByMessage_.insert(make_pair(threeByteKey, make_unique<PressRelease_Midi_CSIMessageGenerator>(csi_, widget, message1, message2)));
+            CSIMessageGeneratorsByMessage_.insert(make_pair(threeByteKeyMsg2, make_unique<PressRelease_Midi_CSIMessageGenerator>(csi_, widget, message1, message2)));
         }
         else if (widgetType == "Fader14Bit" && size == 4)
-            AddCSIMessageGenerator(oneByteKey, new Fader14Bit_Midi_CSIMessageGenerator(csi_, widget));
+            CSIMessageGeneratorsByMessage_.insert(make_pair(oneByteKey, make_unique<Fader14Bit_Midi_CSIMessageGenerator>(csi_, widget)));
         else if (widgetType == "FaderportClassicFader14Bit" && size == 7 && message1 && message2)
-            AddCSIMessageGenerator(oneByteKey, new FaderportClassicFader14Bit_Midi_CSIMessageGenerator(csi_, widget, message1, message2));
+            CSIMessageGeneratorsByMessage_.insert(make_pair(oneByteKey, make_unique<FaderportClassicFader14Bit_Midi_CSIMessageGenerator>(csi_, widget, message1, message2)));
         else if (widgetType == "Fader7Bit" && size== 4)
-            AddCSIMessageGenerator(twoByteKey, new Fader7Bit_Midi_CSIMessageGenerator(csi_, widget));
+            CSIMessageGeneratorsByMessage_.insert(make_pair(twoByteKey, make_unique<Fader7Bit_Midi_CSIMessageGenerator>(csi_, widget)));
         else if (widgetType == "Encoder" && widgetClass == "RotaryWidgetClass")
-            AddCSIMessageGenerator(twoByteKey, new AcceleratedPreconfiguredEncoder_Midi_CSIMessageGenerator(csi_, widget));
+            CSIMessageGeneratorsByMessage_.insert(make_pair(twoByteKey, make_unique<AcceleratedPreconfiguredEncoder_Midi_CSIMessageGenerator>(csi_, widget)));
         else if (widgetType == "Encoder" && size == 4)
-            AddCSIMessageGenerator(twoByteKey, new Encoder_Midi_CSIMessageGenerator(csi_, widget));
+            CSIMessageGeneratorsByMessage_.insert(make_pair(twoByteKey, make_unique<Encoder_Midi_CSIMessageGenerator>(csi_, widget)));
         else if (widgetType == "MFTEncoder" && size > 4)
-            AddCSIMessageGenerator(twoByteKey, new MFT_AcceleratedEncoder_Midi_CSIMessageGenerator(csi_, widget, tokenLines[i]));
+            CSIMessageGeneratorsByMessage_.insert(make_pair(twoByteKey, make_unique<MFT_AcceleratedEncoder_Midi_CSIMessageGenerator>(csi_, widget, tokenLines[i])));
         else if (widgetType == "EncoderPlain" && size == 4)
-            AddCSIMessageGenerator(twoByteKey, new EncoderPlain_Midi_CSIMessageGenerator(csi_, widget));
+            CSIMessageGeneratorsByMessage_.insert(make_pair(twoByteKey, make_unique<EncoderPlain_Midi_CSIMessageGenerator>(csi_, widget)));
         else if (widgetType == "Encoder7Bit" && size == 4)
-            AddCSIMessageGenerator(twoByteKey, new Encoder7Bit_Midi_CSIMessageGenerator(csi_, widget));
+            CSIMessageGeneratorsByMessage_.insert(make_pair(twoByteKey, make_unique<Encoder7Bit_Midi_CSIMessageGenerator>(csi_, widget)));
         else if (widgetType == "Touch" && size == 7 && message1  && message2)
         {
-            AddCSIMessageGenerator(threeByteKey, new Touch_Midi_CSIMessageGenerator(csi_, widget, message1, message2));
-            AddCSIMessageGenerator(threeByteKeyMsg2, new Touch_Midi_CSIMessageGenerator(csi_, widget, message1, message2));
+            CSIMessageGeneratorsByMessage_.insert(make_pair(threeByteKey, make_unique<Touch_Midi_CSIMessageGenerator>(csi_, widget, message1, message2)));
+            CSIMessageGeneratorsByMessage_.insert(make_pair(threeByteKeyMsg2, make_unique<Touch_Midi_CSIMessageGenerator>(csi_, widget, message1, message2)));
         }
         
         // Feedback Processors
@@ -783,15 +783,15 @@ void OSC_ControlSurface::ProcessOSCWidget(int &lineNumber, ifstream &surfaceTemp
     for (int i = 0; i < (int)tokenLines.size(); ++i)
     {
         if (tokenLines[i].size() > 1 && tokenLines[i][0] == "Control")
-            AddCSIMessageGenerator(tokenLines[i][1], new CSIMessageGenerator(csi_, widget));
+            CSIMessageGeneratorsByMessage_.insert(make_pair(tokenLines[i][1], make_unique<CSIMessageGenerator>(csi_, widget)));
         else if (tokenLines[i].size() > 1 && tokenLines[i][0] == "AnyPress")
-            AddCSIMessageGenerator(tokenLines[i][1], new AnyPress_CSIMessageGenerator(csi_, widget));
+            CSIMessageGeneratorsByMessage_.insert(make_pair(tokenLines[i][1], make_unique<AnyPress_CSIMessageGenerator>(csi_, widget)));
         else if (tokenLines[i].size() > 1 && tokenLines[i][0] == "Touch")
-            AddCSIMessageGenerator(tokenLines[i][1], new Touch_CSIMessageGenerator(csi_, widget));
+            CSIMessageGeneratorsByMessage_.insert(make_pair(tokenLines[i][1], make_unique<Touch_CSIMessageGenerator>(csi_, widget)));
         else if (tokenLines[i].size() > 1 && tokenLines[i][0] == "X32Fader")
-            AddCSIMessageGenerator(tokenLines[i][1], new X32_Fader_OSC_MessageGenerator(csi_, widget));
+            CSIMessageGeneratorsByMessage_.insert(make_pair(tokenLines[i][1], make_unique<X32_Fader_OSC_MessageGenerator>(csi_, widget)));
         else if (tokenLines[i].size() > 1 && tokenLines[i][0] == "X32RotaryToEncoder")
-            AddCSIMessageGenerator(tokenLines[i][1], new X32_RotaryToEncoder_OSC_MessageGenerator(csi_, widget));
+            CSIMessageGeneratorsByMessage_.insert(make_pair(tokenLines[i][1], make_unique<X32_RotaryToEncoder_OSC_MessageGenerator>(csi_, widget)));
         else if (tokenLines[i].size() > 1 && tokenLines[i][0] == "FB_Processor")
             widget->AddFeedbackProcessor(new OSC_FeedbackProcessor(csi_, this, widget, tokenLines[i][1]));
         else if (tokenLines[i].size() > 1 && tokenLines[i][0] == "FB_IntProcessor")
@@ -3813,17 +3813,17 @@ void Midi_ControlSurface::ProcessMidiMessage(const MIDI_event_ex_t *evt)
         ShowConsoleMsg(buffer);
     }
 
-    int threeByteKey = evt->midi_message[0]  * 0x10000 + evt->midi_message[1]  * 0x100 + evt->midi_message[2];
-    int twoByteKey = evt->midi_message[0]  * 0x10000 + evt->midi_message[1]  * 0x100;
-    int oneByteKey = evt->midi_message[0] * 0x10000;
+    string threeByteKey = to_string(evt->midi_message[0]  * 0x10000 + evt->midi_message[1]  * 0x100 + evt->midi_message[2]);
+    string twoByteKey = to_string(evt->midi_message[0]  * 0x10000 + evt->midi_message[1]  * 0x100);
+    string oneByteKey = to_string(evt->midi_message[0] * 0x10000);
 
     // At this point we don't know how much of the message comprises the key, so try all three
-    if (Midi_CSIMessageGeneratorsByMessage_.find(threeByteKey) != Midi_CSIMessageGeneratorsByMessage_.end())
-        Midi_CSIMessageGeneratorsByMessage_[threeByteKey]->ProcessMidiMessage(evt);
-    else if (Midi_CSIMessageGeneratorsByMessage_.find(twoByteKey) != Midi_CSIMessageGeneratorsByMessage_.end())
-        Midi_CSIMessageGeneratorsByMessage_[twoByteKey]->ProcessMidiMessage(evt);
-    else if (Midi_CSIMessageGeneratorsByMessage_.find(oneByteKey) != Midi_CSIMessageGeneratorsByMessage_.end())
-        Midi_CSIMessageGeneratorsByMessage_[oneByteKey]->ProcessMidiMessage(evt);
+    if (CSIMessageGeneratorsByMessage_.find(threeByteKey) != CSIMessageGeneratorsByMessage_.end())
+        CSIMessageGeneratorsByMessage_[threeByteKey]->ProcessMidiMessage(evt);
+    else if (CSIMessageGeneratorsByMessage_.find(twoByteKey) != CSIMessageGeneratorsByMessage_.end())
+        CSIMessageGeneratorsByMessage_[twoByteKey]->ProcessMidiMessage(evt);
+    else if (CSIMessageGeneratorsByMessage_.find(oneByteKey) != CSIMessageGeneratorsByMessage_.end())
+        CSIMessageGeneratorsByMessage_[oneByteKey]->ProcessMidiMessage(evt);
 }
 
 void Midi_ControlSurface::SendMidiSysExMessage(MIDI_event_ex_t *midiMessage)

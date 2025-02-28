@@ -1640,6 +1640,7 @@ public:
     CSIMessageGenerator(CSurfIntegrator *const csi, Widget *widget) : csi_(csi), widget_(widget) {}
     virtual ~CSIMessageGenerator() {}
     
+    virtual void ProcessMidiMessage(const MIDI_event_ex_t *midiMessage) {}
     virtual void ProcessMessage(double value)
     {
         widget_->GetZoneManager()->DoAction(widget_, value);
@@ -1672,6 +1673,17 @@ public:
     {
         widget_->GetZoneManager()->DoTouch(widget_, value);
     }
+};
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+class Midi_CSIMessageGenerator : public CSIMessageGenerator
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+{
+protected:
+    Midi_CSIMessageGenerator(CSurfIntegrator *const csi, Widget *widget) : CSIMessageGenerator(csi, widget) {}
+    
+public:
+    virtual ~Midi_CSIMessageGenerator() {}
 };
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2016,7 +2028,7 @@ protected:
     vector<Widget *> widgets_; // owns list
     map<const string, unique_ptr<Widget>> widgetsByName_;
     
-    map<const string, CSIMessageGenerator*> CSIMessageGeneratorsByMessage_;
+    map<const string, unique_ptr<CSIMessageGenerator>> CSIMessageGeneratorsByMessage_;
 
     bool speedX5_ = false;
 
@@ -2094,6 +2106,7 @@ public:
     {
         widgets_.clear();
         widgetsByName_.clear();
+        CSIMessageGeneratorsByMessage_.clear();
         delete zoneManager_;
         delete modifierManager_;
     }
@@ -2360,7 +2373,7 @@ public:
     {
         if (widgetsByName_.count(string(widgetName)) == 0)
         {
-            widgetsByName_.insert(std::make_pair(widgetName, std::make_unique<Widget>(csi_, surface, widgetName)));
+            widgetsByName_.insert(make_pair(widgetName, make_unique<Widget>(csi_, surface, widgetName)));
             
             if (widgetsByName_.count(widgetName) > 0)
                 widgets_.push_back(GetWidgetByName(widgetName));
@@ -2373,12 +2386,6 @@ public:
             return widgetsByName_[widgetName].get();
         else
             return NULL;
-    }
-    
-    void AddCSIMessageGenerator(const string &message, CSIMessageGenerator *messageGenerator)
-    {
-        if (messageGenerator != NULL)
-            CSIMessageGeneratorsByMessage_[message] = messageGenerator;
     }
 
     void OnPageEnter()
@@ -2448,18 +2455,6 @@ public:
             ForceValue(properties, value);
         }
     }
-};
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-class Midi_CSIMessageGenerator : public CSIMessageGenerator
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-{
-protected:
-    Midi_CSIMessageGenerator(CSurfIntegrator *const csi, Widget *widget) : CSIMessageGenerator(csi, widget) {}
-    
-public:
-    virtual ~Midi_CSIMessageGenerator() {}
-    virtual void ProcessMidiMessage(const MIDI_event_ex_t *midiMessage) {}
 };
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2614,8 +2609,6 @@ class Midi_ControlSurface : public ControlSurface
 {
 private:
     Midi_ControlSurfaceIO *const surfaceIO_;
-    
-    map<int, Midi_CSIMessageGenerator*> Midi_CSIMessageGeneratorsByMessage_;
 
     DWORD lastRun_ = 0;
 
@@ -2666,12 +2659,6 @@ public:
     virtual void FlushIO() override
     {
         surfaceIO_->Flush();
-    }
-    
-    void AddCSIMessageGenerator(int messageKey, Midi_CSIMessageGenerator *messageGenerator)
-    {
-        if (messageGenerator != NULL)
-            Midi_CSIMessageGeneratorsByMessage_[messageKey] = messageGenerator;
     }
     
     virtual void RequestUpdate() override
