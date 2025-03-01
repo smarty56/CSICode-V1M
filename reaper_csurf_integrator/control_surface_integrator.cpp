@@ -257,19 +257,19 @@ struct MidiPort
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Midi I/O Manager
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-static vector<MidiPort> s_midiInputs;
-static vector<MidiPort> s_midiOutputs;
+static WDL_TypedBuf<MidiPort> s_midiInputs;
+static WDL_TypedBuf<MidiPort> s_midiOutputs;
 
 void ReleaseMidiInput(midi_Input *input)
 {
-    for (int i = 0; i < s_midiInputs.size(); ++i)
-        if (s_midiInputs[i].dev == (void*)input)
+    for (int i = 0; i < s_midiInputs.GetSize(); ++i)
+        if (s_midiInputs.Get()[i].dev == (void*)input)
         {
-            if (!--s_midiInputs[i].refcnt)
+            if (!--s_midiInputs.Get()[i].refcnt)
             {
                 input->stop();
                 delete input;
-                s_midiInputs.erase(s_midiInputs.begin() + i);
+                s_midiInputs.Delete(i);
                 break;
             }
         }
@@ -277,13 +277,13 @@ void ReleaseMidiInput(midi_Input *input)
 
 void ReleaseMidiOutput(midi_Output *output)
 {
-    for (int i = 0; i < s_midiOutputs.size(); ++i)
-        if (s_midiOutputs[i].dev == (void*)output)
+    for (int i = 0; i < s_midiOutputs.GetSize(); ++i)
+        if (s_midiOutputs.Get()[i].dev == (void*)output)
         {
-            if (!--s_midiOutputs[i].refcnt)
+            if (!--s_midiOutputs.Get()[i].refcnt)
             {
                 delete output;
-                s_midiOutputs.erase(s_midiInputs.begin() + i);
+                s_midiOutputs.Delete(i);
                 break;
             }
         }
@@ -291,11 +291,11 @@ void ReleaseMidiOutput(midi_Output *output)
 
 static midi_Input *GetMidiInputForPort(int inputPort)
 {
-    for (auto midiInput : s_midiInputs)
-        if (midiInput.port == inputPort)
+    for (int i = 0; i < s_midiInputs.GetSize(); ++i)
+        if (s_midiInputs.Get()[i].port == inputPort)
         {
-            midiInput.refcnt++;
-            return (midi_Input *)midiInput.dev;
+            s_midiInputs.Get()[i].refcnt++;
+            return (midi_Input *)s_midiInputs.Get()[i].dev;
         }
     
     midi_Input *newInput = CreateMIDIInput(inputPort);
@@ -304,7 +304,7 @@ static midi_Input *GetMidiInputForPort(int inputPort)
     {
         newInput->start();
         MidiPort midiInputPort(inputPort, newInput);
-        s_midiInputs.push_back(midiInputPort);
+        s_midiInputs.Add(midiInputPort);
     }
     
     return newInput;
@@ -312,11 +312,11 @@ static midi_Input *GetMidiInputForPort(int inputPort)
 
 static midi_Output *GetMidiOutputForPort(int outputPort)
 {
-    for (auto midiOutput : s_midiOutputs)
-        if (midiOutput.port == outputPort)
+    for (int i = 0; i < s_midiOutputs.GetSize(); ++i)
+        if (s_midiOutputs.Get()[i].port == outputPort)
         {
-            midiOutput.refcnt++;
-            return (midi_Output *)midiOutput.dev;
+            s_midiOutputs.Get()[i].refcnt++;
+            return (midi_Output *)s_midiOutputs.Get()[i].dev;
         }
     
     midi_Output *newOutput = CreateMIDIOutput(outputPort, false, NULL);
@@ -324,7 +324,7 @@ static midi_Output *GetMidiOutputForPort(int outputPort)
     if (newOutput)
     {
         MidiPort midiOutputPort(outputPort, newOutput);
-        s_midiOutputs.push_back(midiOutputPort);
+        s_midiOutputs.Add(midiOutputPort);
     }
     
     return newOutput;
@@ -353,16 +353,16 @@ struct OSCSurfaceSocket
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // OSC I/O Manager
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-static vector<OSCSurfaceSocket *> s_inputSockets;
-static vector<OSCSurfaceSocket *> s_outputSockets;
+static WDL_PtrList<OSCSurfaceSocket> s_inputSockets;
+static WDL_PtrList<OSCSurfaceSocket> s_outputSockets;
 
 static oscpkt::UdpSocket *GetInputSocketForPort(string surfaceName, int inputPort)
 {
-    for (auto inputSocket : s_inputSockets)
-        if (inputSocket->surfaceName == surfaceName)
+    for (int i = 0; i < s_inputSockets.GetSize(); ++i)
+        if (s_inputSockets.Get(i)->surfaceName == surfaceName)
         {
-            inputSocket->refcnt++;
-            return inputSocket->socket; // return existing
+            s_inputSockets.Get(i)->refcnt++;
+            return s_inputSockets.Get(i)->socket; // return existing
         }
     
     // otherwise make new
@@ -378,7 +378,7 @@ static oscpkt::UdpSocket *GetInputSocketForPort(string surfaceName, int inputPor
             return NULL;
         }
         
-        s_inputSockets.push_back(new OSCSurfaceSocket(surfaceName, newInputSocket));
+        s_inputSockets.Add(new OSCSurfaceSocket(surfaceName, newInputSocket));
         return newInputSocket;
     }
     
@@ -387,11 +387,11 @@ static oscpkt::UdpSocket *GetInputSocketForPort(string surfaceName, int inputPor
 
 static oscpkt::UdpSocket *GetOutputSocketForAddressAndPort(const string &surfaceName, const string &address, int outputPort)
 {
-    for (auto outputSocket : s_outputSockets)
-        if (outputSocket->surfaceName == surfaceName)
+    for (int i = 0; i < s_outputSockets.GetSize(); ++i)
+        if (s_outputSockets.Get(i)->surfaceName == surfaceName)
         {
-            outputSocket->refcnt++;
-            return outputSocket->socket; // return existing
+            s_outputSockets.Get(i)->refcnt++;
+            return s_outputSockets.Get(i)->socket; // return existing
         }
     
     // otherwise make new
@@ -411,7 +411,7 @@ static oscpkt::UdpSocket *GetOutputSocketForAddressAndPort(const string &surface
             return NULL;
         }
 
-        s_outputSockets.push_back(new OSCSurfaceSocket(surfaceName, newOutputSocket));
+        s_outputSockets.Add(new OSCSurfaceSocket(surfaceName, newOutputSocket));
         return newOutputSocket;
     }
     
@@ -1246,7 +1246,7 @@ void CSurfIntegrator::Init()
                                     int surfaceRefreshRate = atoi(pList.get_prop(PropertyType_MIDISurfaceRefreshRate));
                                     int maxMIDIMesssagesPerRun = atoi(pList.get_prop(PropertyType_MaxMIDIMesssagesPerRun));
                                     
-                                    midiSurfacesIO_.push_back(new Midi_ControlSurfaceIO(this, nameProp, channelCount, GetMidiInputForPort(midiIn), GetMidiOutputForPort(midiOut), surfaceRefreshRate, maxMIDIMesssagesPerRun));
+                                    midiSurfacesIO_.push_back(make_unique<Midi_ControlSurfaceIO>(this, nameProp, channelCount, GetMidiInputForPort(midiIn), GetMidiOutputForPort(midiOut), surfaceRefreshRate, maxMIDIMesssagesPerRun));
                                 }
                             }
                             else if (( ! strcmp(typeProp, s_OSCSurfaceToken) || ! strcmp(typeProp, s_OSCX32SurfaceToken)) && tokens.size() == 7)
@@ -1262,9 +1262,9 @@ void CSurfIntegrator::Init()
                                     int maxPacketsPerRun = atoi(pList.get_prop(PropertyType_MaxPacketsPerRun));
                                     
                                     if ( ! strcmp(typeProp, s_OSCSurfaceToken))
-                                        oscSurfacesIO_.push_back(new OSC_ControlSurfaceIO(this, nameProp, channelCount, receiveOnPort, transmitToPort, transmitToIPAddress, maxPacketsPerRun));
+                                        oscSurfacesIO_.push_back(make_unique<OSC_ControlSurfaceIO>(this, nameProp, channelCount, receiveOnPort, transmitToPort, transmitToIPAddress, maxPacketsPerRun));
                                     else if ( ! strcmp(typeProp, s_OSCX32SurfaceToken))
-                                        oscSurfacesIO_.push_back(new OSC_X32ControlSurfaceIO(this, nameProp, channelCount, receiveOnPort, transmitToPort, transmitToIPAddress, maxPacketsPerRun));
+                                        oscSurfacesIO_.push_back(make_unique<OSC_X32ControlSurfaceIO>(this, nameProp, channelCount, receiveOnPort, transmitToPort, transmitToIPAddress, maxPacketsPerRun));
                                 }
                             }
                         }
@@ -1304,9 +1304,9 @@ void CSurfIntegrator::Init()
                             if ( ! strcmp(scrollSynchProp, "Yes"))
                                 isScrollSynchEnabled = true;
                         }
-                        
-                        currentPage = new Page(this, pageNameProp, followMCP, synchPages, isScrollLinkEnabled, isScrollSynchEnabled);
-                        pages_.push_back(currentPage);
+
+                        pages_.push_back(make_unique<Page>(this, pageNameProp, followMCP, synchPages, isScrollLinkEnabled, isScrollSynchEnabled));
+                        currentPage = pages_.back().get();
                     }
                 }
                 else if (const char *broadcasterProp = pList.get_prop(PropertyType_Broadcaster))
@@ -1321,16 +1321,16 @@ void CSurfIntegrator::Init()
                         ControlSurface *broadcaster = NULL;
                         ControlSurface *listener = NULL;
                         
-                        const vector<ControlSurface *> &surfaces = currentPage->GetSurfaces();
+                        const vector<unique_ptr<ControlSurface>> &surfaces = currentPage->GetSurfaces();
                         
                         string currentSurface = string(pList.get_prop(PropertyType_Listener));
                         
                         for (int i = 0; i < surfaces.size(); ++i)
                         {
                             if (surfaces[i]->GetName() == currentBroadcaster)
-                                broadcaster = surfaces[i];
+                                broadcaster = surfaces[i].get();
                             if (surfaces[i]->GetName() == currentSurface)
-                                 listener = surfaces[i];
+                                 listener = surfaces[i].get();
                         }
                         
                         if (broadcaster != NULL && listener != NULL)
@@ -1400,28 +1400,24 @@ void CSurfIntegrator::Init()
 
                                 bool foundIt = false;
                                 
-                                for (int i = 0; i < midiSurfacesIO_.size(); ++i)
+                                for (auto &io : midiSurfacesIO_)
                                 {
-                                    Midi_ControlSurfaceIO *const io = midiSurfacesIO_[i];
-                                    
                                     if ( ! strcmp(surfaceProp, io->GetName()))
                                     {
                                         foundIt = true;
-                                        currentPage->AddSurface(new Midi_ControlSurface(this, currentPage, surfaceProp, startChannel, surfaceFile.c_str(), zoneFolder.c_str(), fxZoneFolder.c_str(), io));
+                                        currentPage->GetSurfaces().push_back(make_unique<Midi_ControlSurface>(this, currentPage, surfaceProp, startChannel, surfaceFile.c_str(), zoneFolder.c_str(), fxZoneFolder.c_str(), io.get()));
                                         break;
                                     }
                                 }
                                 
                                 if ( ! foundIt)
                                 {
-                                    for (int i = 0; i < oscSurfacesIO_.size(); ++i)
+                                    for (auto &io : oscSurfacesIO_)
                                     {
-                                        OSC_ControlSurfaceIO *const io = oscSurfacesIO_[i];
-                                        
                                         if ( ! strcmp(surfaceProp, io->GetName()))
                                         {
                                             foundIt = true;
-                                            currentPage->AddSurface(new OSC_ControlSurface(this, currentPage, surfaceProp, startChannel, surfaceFile.c_str(), zoneFolder.c_str(), fxZoneFolder.c_str(), io));
+                                            currentPage->GetSurfaces().push_back(make_unique<OSC_ControlSurface>(this, currentPage, surfaceProp, startChannel, surfaceFile.c_str(), zoneFolder.c_str(), fxZoneFolder.c_str(), io.get()));
                                             break;
                                         }
                                     }
@@ -1443,11 +1439,11 @@ void CSurfIntegrator::Init()
     }
     
     if (pages_.size() == 0)
-        pages_.push_back(new Page(this, "Home", false, false, false, false));
+        pages_.push_back(make_unique<Page>(this, "Home", false, false, false, false));
     
-    for (auto page : pages_)
+    for (auto &page : pages_)
     {
-        for (auto surface : page->GetSurfaces())
+        for (auto &surface : page->GetSurfaces())
             surface->ForceClear();
 
         page->OnInitialization();
@@ -3912,24 +3908,24 @@ OSC_ControlSurfaceIO::~OSC_ControlSurfaceIO()
 
     if (inSocket_)
     {
-        for (int x = 0; x < s_inputSockets.size(); ++x)
+        for (int x = 0; x < s_inputSockets.GetSize(); ++x)
         {
-            if (s_inputSockets[x]->socket == inSocket_)
+            if (s_inputSockets.Get(x)->socket == inSocket_)
             {
-                if (!--s_inputSockets[x]->refcnt)
-                    s_inputSockets.erase(s_inputSockets.begin() + x);
+                if (!--s_inputSockets.Get(x)->refcnt)
+                    s_inputSockets.Delete(x);
                 break;
             }
         }
     }
     if (outSocket_ && outSocket_ != inSocket_)
     {
-        for (int x = 0; x < s_outputSockets.size(); ++x)
+        for (int x = 0; x < s_outputSockets.GetSize(); ++x)
         {
-            if (s_outputSockets[x]->socket == outSocket_)
+            if (s_outputSockets.Get(x)->socket == outSocket_)
             {
-                if (!--s_outputSockets[x]->refcnt)
-                    s_outputSockets.erase(s_outputSockets.begin() + x);
+                if (!--s_outputSockets.Get(x)->refcnt)
+                    s_outputSockets.Delete(x);
                 break;
             }
         }
@@ -4233,11 +4229,8 @@ CSurfIntegrator::~CSurfIntegrator()
     Shutdown();
 
     midiSurfacesIO_.clear();
-    
     oscSurfacesIO_.clear();
-            
     pages_.clear();
-        
     actions_.clear();
 }
 

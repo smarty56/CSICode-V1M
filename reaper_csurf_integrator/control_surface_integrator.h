@@ -2023,7 +2023,6 @@ protected:
     
     vector<Widget *> widgets_; // owns list
     map<const string, unique_ptr<Widget>> widgetsByName_;
-    
     map<const string, unique_ptr<CSIMessageGenerator>> CSIMessageGeneratorsByMessage_;
 
     bool speedX5_ = false;
@@ -3684,7 +3683,7 @@ protected:
     string const name_;
     TrackNavigationManager *trackNavigationManager_;
     ModifierManager *modifierManager_;
-    vector<ControlSurface *> surfaces_;
+    vector<unique_ptr<ControlSurface>> surfaces_;
     
 public:
     Page(CSurfIntegrator *const csi, const char *name, bool followMCP,  bool synchPages, bool isScrollLinkEnabled, bool isScrollSynchEnabled) : csi_(csi), name_(name), trackNavigationManager_(new TrackNavigationManager(csi_, this, followMCP, synchPages, isScrollLinkEnabled, isScrollSynchEnabled)), modifierManager_(new ModifierManager(csi_, this, NULL)) {}
@@ -3700,35 +3699,29 @@ public:
     
     ModifierManager *GetModifierManager() { return modifierManager_; }
     
-    const vector<ControlSurface *> &GetSurfaces() { return surfaces_; }
-    
-    void AddSurface(ControlSurface *surface)
-    {
-        if (surface != NULL)
-            surfaces_.push_back(surface);
-    }
-    
+    vector<unique_ptr<ControlSurface>> &GetSurfaces() { return surfaces_; }
+       
     void UpdateCurrentActionContextModifiers()
     {
-        for (auto surface : surfaces_)
+        for (auto &surface : surfaces_)
             surface->UpdateCurrentActionContextModifiers();
     }
     
     void ForceClear()
     {
-        for (auto surface : surfaces_)
+        for (auto &surface : surfaces_)
             surface->ForceClear();
     }
     
     void ForceClearTrack(int trackNum)
     {
-        for (auto surface : surfaces_)
+        for (auto &surface : surfaces_)
             surface->ForceClearTrack(trackNum);
     }
     
     void ForceUpdateTrackColors()
     {
-        for (auto surface : surfaces_)
+        for (auto &surface : surfaces_)
             surface->ForceUpdateTrackColors();
     }
       
@@ -3741,7 +3734,7 @@ public:
     {
         trackNavigationManager_->OnTrackSelection();
         
-        for (auto surface : surfaces_)
+        for (auto &surface : surfaces_)
             surface->OnTrackSelection(track);
     }
     
@@ -3754,13 +3747,13 @@ public:
     {
         trackNavigationManager_->OnTrackSelectionBySurface(track);
         
-        for (auto surface : surfaces_)
+        for (auto &surface : surfaces_)
             surface->OnTrackSelection(track);
     }
     
     void TrackFXListChanged(MediaTrack *track)
     {
-        for (auto surface : surfaces_)
+        for (auto &surface : surfaces_)
             surface->TrackFXListChanged(track);
     }
     
@@ -3768,7 +3761,7 @@ public:
     {
         trackNavigationManager_->EnterPage();
         
-        for (auto surface : surfaces_)
+        for (auto &surface : surfaces_)
             surface->OnPageEnter();
     }
     
@@ -3776,43 +3769,43 @@ public:
     {
         trackNavigationManager_->LeavePage();
         
-        for (auto surface : surfaces_)
+        for (auto &surface : surfaces_)
             surface->OnPageLeave();
     }
     
     void OnInitialization()
     {
-        for (auto surface : surfaces_)
+        for (auto &surface : surfaces_)
             surface->OnInitialization();
     }
     
     void SignalStop()
     {
-        for (auto surface : surfaces_)
+        for (auto &surface : surfaces_)
             surface->HandleStop();
     }
     
     void SignalPlay()
     {
-        for (auto surface : surfaces_)
+        for (auto &surface : surfaces_)
             surface->HandlePlay();
     }
     
     void SignalRecord()
     {
-        for (auto surface : surfaces_)
+        for (auto &surface : surfaces_)
             surface->HandleRecord();
     }
             
     void GoHome()
     {
-        for (auto surface : surfaces_)
+        for (auto &surface : surfaces_)
             surface->GetZoneManager()->GoHome();
     }
     
     void GoZone(const char *name)
     {
-        for (auto surface : surfaces_)
+        for (auto &surface : surfaces_)
             surface->GetZoneManager()->GoZone(name);
     }
     
@@ -3829,7 +3822,7 @@ public:
         else if (!strcmp(zoneName, "SelectedTrack"))
             trackNavigationManager_->AdjustSelectedTrackBank(amount);
         else
-            for (auto surface : surfaces_)
+            for (auto &surface : surfaces_)
                 surface->GetZoneManager()->AdjustBank(zoneName, amount);
     }
     
@@ -3944,10 +3937,10 @@ public:
         trackNavigationManager_->RebuildFolderTracks();
         trackNavigationManager_->RebuildSelectedTracks();
         
-        for (auto surface : surfaces_)
+        for (auto &surface : surfaces_)
             surface->HandleExternalInput();
         
-        for (auto surface : surfaces_)
+        for (auto &surface : surfaces_)
             surface->RequestUpdate();
     }
 //*/
@@ -3964,12 +3957,12 @@ private:
 
     bool isInitialized_ = false;
     
-    vector<Midi_ControlSurfaceIO *> midiSurfacesIO_;
-    vector<OSC_ControlSurfaceIO *> oscSurfacesIO_;
+    vector<unique_ptr<Midi_ControlSurfaceIO>> midiSurfacesIO_;
+    vector<unique_ptr<OSC_ControlSurfaceIO>> oscSurfacesIO_;
 
     map<const string, unique_ptr<Action>> actions_;
 
-    vector<Page *> pages_;
+    vector<unique_ptr<Page>> pages_;
 
     int currentPageIndex_ = 0;
     
@@ -4207,7 +4200,7 @@ public:
     
     void TrackFXListChanged(MediaTrack *track)
     {
-        for (auto page : pages_)
+        for (auto &page : pages_)
             page->TrackFXListChanged(track);
         
         if (g_fxParamsWrite)
