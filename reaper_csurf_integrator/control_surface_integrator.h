@@ -3967,7 +3967,7 @@ private:
     vector<Midi_ControlSurfaceIO *> midiSurfacesIO_;
     vector<OSC_ControlSurfaceIO *> oscSurfacesIO_;
 
-    map<const string, Action*> actions_;
+    map<const string, unique_ptr<Action>> actions_;
 
     vector<Page *> pages_;
 
@@ -4084,34 +4084,34 @@ public:
     // These direct calls are used by Learn to change Actions in the dynamic learnFXZone -- it allows for realtime editing, with results immediately visible in the hardware
     Action *GetNoActionAction()
     {
-        return actions_["NoAction"];
+        return actions_["NoAction"].get();
     }
     
     Action *GetFXParamAction(char *FXName)
     {
        if (strstr(FXName, "JS: "))
-           return actions_["JSFXParam"];
+           return actions_["JSFXParam"].get();
        else
-        return actions_["FXParam"];
+        return actions_["FXParam"].get();
     }
         
     Action *GetFixedTextDisplayAction()
     {
-        return actions_["FixedTextDisplay"];
+        return actions_["FixedTextDisplay"].get();
     }
     
     Action *GetFXParamValueDisplayAction()
     {
-        return actions_["FXParamValueDisplay"];
+        return actions_["FXParamValueDisplay"].get();
     }
     // End direct calls
     
     ActionContext *GetActionContext(const char *actionName, Widget *widget, Zone *zone, const vector<string> &params)
     {
         if (actions_.find(actionName) != actions_.end())
-            return new ActionContext(this, actions_[actionName], widget, zone, 0, params, NULL);
+            return new ActionContext(this, actions_[actionName].get(), widget, zone, 0, params, NULL);
         else
-            return new ActionContext(this, actions_["NoAction"], widget, zone, 0, params, NULL);
+            return new ActionContext(this, actions_["NoAction"].get(), widget, zone, 0, params, NULL);
     }
 
     void OnTrackSelection(MediaTrack *track) override
