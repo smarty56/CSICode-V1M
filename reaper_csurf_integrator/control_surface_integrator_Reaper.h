@@ -65,7 +65,15 @@ static bool GetColorValue(const char *hexColor, rgba_color &colorValue)
 
 struct MIDI_event_ex_t : MIDI_event_t
 {
-    MIDI_event_ex_t() {};
+    MIDI_event_ex_t()
+    {
+        frame_offset = 0;
+        size = 3;
+        midi_message[0] = 0x00;
+        midi_message[1] = 0x00;
+        midi_message[2] = 0x00;
+        midi_message[3] = 0x00;
+    };
     
     MIDI_event_ex_t(const unsigned char first, const unsigned char second, const unsigned char third)
     {

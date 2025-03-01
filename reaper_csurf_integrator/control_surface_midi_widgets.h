@@ -16,25 +16,25 @@ class PressRelease_Midi_CSIMessageGenerator : public Midi_CSIMessageGenerator
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 {
 protected:
-    MIDI_event_ex_t *press_;
-    MIDI_event_ex_t *release_;
+    MIDI_event_ex_t press_;
+    MIDI_event_ex_t release_;
     
 public:
     virtual ~PressRelease_Midi_CSIMessageGenerator() {}
 
-    PressRelease_Midi_CSIMessageGenerator(CSurfIntegrator *const csi, Widget *widget, MIDI_event_ex_t *press) : Midi_CSIMessageGenerator(csi, widget), press_(press) 
+    PressRelease_Midi_CSIMessageGenerator(CSurfIntegrator *const csi, Widget *widget, MIDI_event_ex_t press) : Midi_CSIMessageGenerator(csi, widget), press_(press)
     {
         widget->SetIsTwoState();
     }
     
-    PressRelease_Midi_CSIMessageGenerator(CSurfIntegrator *const csi, Widget *widget, MIDI_event_ex_t *press, MIDI_event_ex_t *release) : Midi_CSIMessageGenerator(csi, widget), press_(press), release_(release)
+    PressRelease_Midi_CSIMessageGenerator(CSurfIntegrator *const csi, Widget *widget, MIDI_event_ex_t press, MIDI_event_ex_t release) : Midi_CSIMessageGenerator(csi, widget), press_(press), release_(release)
     {
         widget->SetIsTwoState();
     }
 
     virtual void ProcessMidiMessage(const MIDI_event_ex_t *midiMessage) override
     {
-        widget_->GetZoneManager()->DoAction(widget_, midiMessage->IsEqualTo(press_) ? 1 : 0);
+        widget_->GetZoneManager()->DoAction(widget_, midiMessage->IsEqualTo(&press_) ? 1 : 0);
     }
 };
 
@@ -43,17 +43,17 @@ class Touch_Midi_CSIMessageGenerator : public Midi_CSIMessageGenerator
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 {
 protected:
-    MIDI_event_ex_t *press_;
-    MIDI_event_ex_t *release_;
+    MIDI_event_ex_t press_;
+    MIDI_event_ex_t release_;
 
 public:
     virtual ~Touch_Midi_CSIMessageGenerator() {}
     
-    Touch_Midi_CSIMessageGenerator(CSurfIntegrator *const csi, Widget *widget, MIDI_event_ex_t *press, MIDI_event_ex_t *release) : Midi_CSIMessageGenerator(csi, widget), press_(press), release_(release) {}
+    Touch_Midi_CSIMessageGenerator(CSurfIntegrator *const csi, Widget *widget, MIDI_event_ex_t press, MIDI_event_ex_t release) : Midi_CSIMessageGenerator(csi, widget), press_(press), release_(release) {}
     
     virtual void ProcessMidiMessage(const MIDI_event_ex_t *midiMessage) override
     {
-        widget_->GetZoneManager()->DoTouch(widget_, midiMessage->IsEqualTo(press_) ? 1 : 0);
+        widget_->GetZoneManager()->DoTouch(widget_, midiMessage->IsEqualTo(&press_) ? 1 : 0);
     }
 };
 
@@ -61,12 +61,9 @@ public:
 class AnyPress_Midi_CSIMessageGenerator : public Midi_CSIMessageGenerator
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 {
-protected:
-    MIDI_event_ex_t *press_;
-
 public:
     virtual ~AnyPress_Midi_CSIMessageGenerator() {}
-    AnyPress_Midi_CSIMessageGenerator(CSurfIntegrator *const csi, Widget *widget, MIDI_event_ex_t *press) : Midi_CSIMessageGenerator(csi, widget), press_(press)
+    AnyPress_Midi_CSIMessageGenerator(CSurfIntegrator *const csi, Widget *widget) : Midi_CSIMessageGenerator(csi, widget)
     {
         widget->SetIsTwoState();
     }
@@ -97,23 +94,19 @@ class FaderportClassicFader14Bit_Midi_CSIMessageGenerator : public Midi_CSIMessa
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 {
 protected:
-    MIDI_event_ex_t *message1_;
-    MIDI_event_ex_t *message2_;
+    MIDI_event_ex_t message1_;
+    MIDI_event_ex_t message2_;
 
 public:
     virtual ~FaderportClassicFader14Bit_Midi_CSIMessageGenerator() {}
-    FaderportClassicFader14Bit_Midi_CSIMessageGenerator(CSurfIntegrator *const csi, Widget *widget, MIDI_event_ex_t *message1, MIDI_event_ex_t *message2) : Midi_CSIMessageGenerator(csi, widget)
-    {
-        message1_ = message1;
-        message2_ = message2;
-    }
+    FaderportClassicFader14Bit_Midi_CSIMessageGenerator(CSurfIntegrator *const csi, Widget *widget, MIDI_event_ex_t message1, MIDI_event_ex_t message2) : Midi_CSIMessageGenerator(csi, widget), message1_(message1), message2_(message2) {}
     
     virtual void ProcessMidiMessage(const MIDI_event_ex_t *midiMessage) override
     {
-        if (message1_->midi_message[1] == midiMessage->midi_message[1])
-            message1_->midi_message[2] = midiMessage->midi_message[2];
-        else if (message2_->midi_message[1] == midiMessage->midi_message[1])
-            widget_->GetZoneManager()->DoAction(widget_, int14ToNormalized(message1_->midi_message[2], midiMessage->midi_message[2]));
+        if (message1_.midi_message[1] == midiMessage->midi_message[1])
+            message1_.midi_message[2] = midiMessage->midi_message[2];
+        else if (message2_.midi_message[1] == midiMessage->midi_message[1])
+            widget_->GetZoneManager()->DoAction(widget_, int14ToNormalized(message1_.midi_message[2], midiMessage->midi_message[2]));
     }
 };
 
@@ -287,7 +280,7 @@ class TwoState_Midi_FeedbackProcessor : public Midi_FeedbackProcessor
 {
 public:
     virtual ~TwoState_Midi_FeedbackProcessor() {}
-    TwoState_Midi_FeedbackProcessor(CSurfIntegrator *const csi, Midi_ControlSurface *surface, Widget *widget, MIDI_event_ex_t *feedback1, MIDI_event_ex_t *feedback2) : Midi_FeedbackProcessor(csi, surface, widget, feedback1, feedback2) { }
+    TwoState_Midi_FeedbackProcessor(CSurfIntegrator *const csi, Midi_ControlSurface *surface, Widget *widget, MIDI_event_ex_t feedback1, MIDI_event_ex_t feedback2) : Midi_FeedbackProcessor(csi, surface, widget, feedback1, feedback2) { }
     
     virtual const char *GetName() override { return "TwoState_Midi_FeedbackProcessor"; }
     
@@ -301,13 +294,13 @@ public:
     {
         if (value == 0.0)
         {
-            if (midiFeedbackMessage2_)
-                ForceMidiMessage(midiFeedbackMessage2_->midi_message[0], midiFeedbackMessage2_->midi_message[1], midiFeedbackMessage2_->midi_message[2]);
-            else if (midiFeedbackMessage1_)
-                ForceMidiMessage(midiFeedbackMessage1_->midi_message[0], midiFeedbackMessage1_->midi_message[1], 0x00);
+            if (midiFeedbackMessage2_.midi_message[0] != 0)
+                ForceMidiMessage(midiFeedbackMessage2_.midi_message[0], midiFeedbackMessage2_.midi_message[1], midiFeedbackMessage2_.midi_message[2]);
+            else
+                ForceMidiMessage(midiFeedbackMessage1_.midi_message[0], midiFeedbackMessage1_.midi_message[1], 0x00);
         }
-        else if (midiFeedbackMessage1_)
-            ForceMidiMessage(midiFeedbackMessage1_->midi_message[0], midiFeedbackMessage1_->midi_message[1], midiFeedbackMessage1_->midi_message[2]);
+        else
+            ForceMidiMessage(midiFeedbackMessage1_.midi_message[0], midiFeedbackMessage1_.midi_message[1], midiFeedbackMessage1_.midi_message[2]);
     }
 };
 
@@ -320,7 +313,7 @@ private:
     
 public:
     virtual ~FPTwoStateRGB_Midi_FeedbackProcessor() {}
-    FPTwoStateRGB_Midi_FeedbackProcessor(CSurfIntegrator *const csi, Midi_ControlSurface *surface, Widget *widget, MIDI_event_ex_t *feedback1) : Midi_FeedbackProcessor(csi, surface, widget, feedback1)
+    FPTwoStateRGB_Midi_FeedbackProcessor(CSurfIntegrator *const csi, Midi_ControlSurface *surface, Widget *widget, MIDI_event_ex_t feedback1) : Midi_FeedbackProcessor(csi, surface, widget, feedback1)
     {
         active_ = false;
     }
@@ -361,10 +354,10 @@ public:
     {
         lastColor_ = color;
         
-        SendMidiMessage(0x90, midiFeedbackMessage1_->midi_message[1], 0x7f);
-        SendMidiMessage(0x91, midiFeedbackMessage1_->midi_message[1],  color.r);  // only 127 bit allowed in Midi byte 3
-        SendMidiMessage(0x92, midiFeedbackMessage1_->midi_message[1],  color.g);
-        SendMidiMessage(0x93, midiFeedbackMessage1_->midi_message[1],  color.b);
+        SendMidiMessage(0x90, midiFeedbackMessage1_.midi_message[1], 0x7f);
+        SendMidiMessage(0x91, midiFeedbackMessage1_.midi_message[1],  color.r);  // only 127 bit allowed in Midi byte 3
+        SendMidiMessage(0x92, midiFeedbackMessage1_.midi_message[1],  color.g);
+        SendMidiMessage(0x93, midiFeedbackMessage1_.midi_message[1],  color.b);
     }
 };
 
@@ -377,7 +370,7 @@ private:
 
 public:
     virtual ~SCE24TwoStateLED_Midi_FeedbackProcessor() {}
-    SCE24TwoStateLED_Midi_FeedbackProcessor(CSurfIntegrator *const csi, Midi_ControlSurface *surface, Widget *widget, MIDI_event_ex_t *feedback1) : Midi_FeedbackProcessor(csi, surface, widget, feedback1)
+    SCE24TwoStateLED_Midi_FeedbackProcessor(CSurfIntegrator *const csi, Midi_ControlSurface *surface, Widget *widget, MIDI_event_ex_t feedback1) : Midi_FeedbackProcessor(csi, surface, widget, feedback1)
     {
         lastValue_ = 0.0;
     }
@@ -420,7 +413,7 @@ public:
         midiSysExData.evt.midi_message[midiSysExData.evt.size++] = 0x02;
         midiSysExData.evt.midi_message[midiSysExData.evt.size++] = 0x38;
         midiSysExData.evt.midi_message[midiSysExData.evt.size++] = 0x01;
-        midiSysExData.evt.midi_message[midiSysExData.evt.size++] = midiFeedbackMessage1_->midi_message[1];
+        midiSysExData.evt.midi_message[midiSysExData.evt.size++] = midiFeedbackMessage1_.midi_message[1];
         midiSysExData.evt.midi_message[midiSysExData.evt.size++] = color.r / 2;
         midiSysExData.evt.midi_message[midiSysExData.evt.size++] = color.g / 2;
         midiSysExData.evt.midi_message[midiSysExData.evt.size++] = color.b / 2;
@@ -444,7 +437,7 @@ private:
 
 public:
     virtual ~SCE24OLED_Midi_FeedbackProcessor() {}
-    SCE24OLED_Midi_FeedbackProcessor(CSurfIntegrator *const csi, Midi_ControlSurface *surface, Widget *widget, MIDI_event_ex_t *feedback1, int topMargin, int bottomMargin, int font) :
+    SCE24OLED_Midi_FeedbackProcessor(CSurfIntegrator *const csi, Midi_ControlSurface *surface, Widget *widget, MIDI_event_ex_t feedback1, int topMargin, int bottomMargin, int font) :
       Midi_FeedbackProcessor(csi, surface, widget, feedback1), topMargin_(topMargin), bottomMargin_(bottomMargin), font_(font)
     {
         lastStringSent_ = "";
@@ -545,7 +538,7 @@ public:
         midiSysExData.evt.midi_message[midiSysExData.evt.size++] = 0x02;
         midiSysExData.evt.midi_message[midiSysExData.evt.size++] = 0x38;
         midiSysExData.evt.midi_message[midiSysExData.evt.size++] = 0x01;
-        midiSysExData.evt.midi_message[midiSysExData.evt.size++] = midiFeedbackMessage1_->midi_message[1];
+        midiSysExData.evt.midi_message[midiSysExData.evt.size++] = midiFeedbackMessage1_.midi_message[1];
         
         midiSysExData.evt.midi_message[midiSysExData.evt.size++] = topMargin_;
         midiSysExData.evt.midi_message[midiSysExData.evt.size++] = bottomMargin_;
@@ -580,7 +573,7 @@ private:
 
 public:
     virtual ~SCE24Text_Midi_FeedbackProcessor() {}
-    SCE24Text_Midi_FeedbackProcessor(CSurfIntegrator *const csi, Midi_ControlSurface *surface, Widget *widget, MIDI_event_ex_t *feedback1, int topMargin, int bottomMargin, int font) :
+    SCE24Text_Midi_FeedbackProcessor(CSurfIntegrator *const csi, Midi_ControlSurface *surface, Widget *widget, MIDI_event_ex_t feedback1, int topMargin, int bottomMargin, int font) :
       Midi_FeedbackProcessor(csi, surface, widget, feedback1),  topMargin_(topMargin), bottomMargin_(bottomMargin), font_(font)
     {
         lastStringSent_ = "";
@@ -602,7 +595,7 @@ public:
         midiSysExData.evt.midi_message[midiSysExData.evt.size++] = 0x02;
         midiSysExData.evt.midi_message[midiSysExData.evt.size++] = 0x38;
         midiSysExData.evt.midi_message[midiSysExData.evt.size++] = 0x01;
-        midiSysExData.evt.midi_message[midiSysExData.evt.size++] = midiFeedbackMessage1_->midi_message[1];
+        midiSysExData.evt.midi_message[midiSysExData.evt.size++] = midiFeedbackMessage1_.midi_message[1];
         
         midiSysExData.evt.midi_message[midiSysExData.evt.size++] = 0;
         midiSysExData.evt.midi_message[midiSysExData.evt.size++] = 63;
@@ -670,7 +663,7 @@ public:
         midiSysExData.evt.midi_message[midiSysExData.evt.size++] = 0x02;
         midiSysExData.evt.midi_message[midiSysExData.evt.size++] = 0x38;
         midiSysExData.evt.midi_message[midiSysExData.evt.size++] = 0x01;
-        midiSysExData.evt.midi_message[midiSysExData.evt.size++] = midiFeedbackMessage1_->midi_message[1];
+        midiSysExData.evt.midi_message[midiSysExData.evt.size++] = midiFeedbackMessage1_.midi_message[1];
         
         midiSysExData.evt.midi_message[midiSysExData.evt.size++] = topMargin_;
         midiSysExData.evt.midi_message[midiSysExData.evt.size++] = bottomMargin_;
@@ -766,7 +759,7 @@ class SCE24Encoder_Midi_FeedbackProcessor : public Midi_FeedbackProcessor
 {
 public:
     virtual ~SCE24Encoder_Midi_FeedbackProcessor() {}
-    SCE24Encoder_Midi_FeedbackProcessor(CSurfIntegrator *const csi, Midi_ControlSurface *surface, Widget *widget, MIDI_event_ex_t *feedback1) : Midi_FeedbackProcessor(csi, surface, widget, feedback1) { }
+    SCE24Encoder_Midi_FeedbackProcessor(CSurfIntegrator *const csi, Midi_ControlSurface *surface, Widget *widget, MIDI_event_ex_t feedback1) : Midi_FeedbackProcessor(csi, surface, widget, feedback1) { }
     
     virtual const char *GetName() override { return "SCE24Encoder_Midi_FeedbackProcessor"; }
 
@@ -785,7 +778,7 @@ public:
         midiSysExData.evt.midi_message[midiSysExData.evt.size++] = 0x02;
         midiSysExData.evt.midi_message[midiSysExData.evt.size++] = 0x38;
         midiSysExData.evt.midi_message[midiSysExData.evt.size++] = 0x01;
-        midiSysExData.evt.midi_message[midiSysExData.evt.size++] = midiFeedbackMessage1_->midi_message[1];
+        midiSysExData.evt.midi_message[midiSysExData.evt.size++] = midiFeedbackMessage1_.midi_message[1];
         midiSysExData.evt.midi_message[midiSysExData.evt.size++] = 120;
         midiSysExData.evt.midi_message[midiSysExData.evt.size++] = 127;
         midiSysExData.evt.midi_message[midiSysExData.evt.size++] = 5;
@@ -802,12 +795,12 @@ public:
     
     virtual void SetValue(const PropertyList &properties, double value) override
     {
-        SendMidiMessage(midiFeedbackMessage1_->midi_message[0], midiFeedbackMessage1_->midi_message[1], GetMidiValue(properties, value));
+        SendMidiMessage(midiFeedbackMessage1_.midi_message[0], midiFeedbackMessage1_.midi_message[1], GetMidiValue(properties, value));
     }
 
     virtual void ForceValue(const PropertyList &properties, double value) override
     {
-        ForceMidiMessage(midiFeedbackMessage1_->midi_message[0], midiFeedbackMessage1_->midi_message[1], GetMidiValue(properties, value));
+        ForceMidiMessage(midiFeedbackMessage1_.midi_message[0], midiFeedbackMessage1_.midi_message[1], GetMidiValue(properties, value));
     }
     
     int GetMidiValue(const PropertyList &properties, double value)
@@ -926,7 +919,7 @@ public:
             midiSysExData.evt.midi_message[midiSysExData.evt.size++] = 0x02;
             midiSysExData.evt.midi_message[midiSysExData.evt.size++] = 0x38;
             midiSysExData.evt.midi_message[midiSysExData.evt.size++] = 0x01;
-            midiSysExData.evt.midi_message[midiSysExData.evt.size++] = midiFeedbackMessage1_->midi_message[1];
+            midiSysExData.evt.midi_message[midiSysExData.evt.size++] = midiFeedbackMessage1_.midi_message[1];
             midiSysExData.evt.midi_message[midiSysExData.evt.size++] = colors[i].ringRangeLow;
             midiSysExData.evt.midi_message[midiSysExData.evt.size++] = colors[i].ringRangeMedium;
             midiSysExData.evt.midi_message[midiSysExData.evt.size++] = colors[i].ringRangeHigh;
@@ -946,7 +939,7 @@ class NovationLaunchpadMiniRGB7Bit_Midi_FeedbackProcessor : public Midi_Feedback
 {
 public:
     virtual ~NovationLaunchpadMiniRGB7Bit_Midi_FeedbackProcessor() {}
-    NovationLaunchpadMiniRGB7Bit_Midi_FeedbackProcessor(CSurfIntegrator *const csi, Midi_ControlSurface *surface, Widget *widget, MIDI_event_ex_t *feedback1) : Midi_FeedbackProcessor(csi, surface, widget, feedback1) { }
+    NovationLaunchpadMiniRGB7Bit_Midi_FeedbackProcessor(CSurfIntegrator *const csi, Midi_ControlSurface *surface, Widget *widget, MIDI_event_ex_t feedback1) : Midi_FeedbackProcessor(csi, surface, widget, feedback1) { }
     
     virtual const char *GetName() override { return "NovationLaunchpadMiniRGB7Bit_Midi_FeedbackProcessor"; }
 
@@ -983,7 +976,7 @@ public:
         midiSysExData.evt.midi_message[midiSysExData.evt.size++] = 0x03;
         
         midiSysExData.evt.midi_message[midiSysExData.evt.size++] = 0x03;
-        midiSysExData.evt.midi_message[midiSysExData.evt.size++] = midiFeedbackMessage1_->midi_message[1] ;
+        midiSysExData.evt.midi_message[midiSysExData.evt.size++] = midiFeedbackMessage1_.midi_message[1] ;
         midiSysExData.evt.midi_message[midiSysExData.evt.size++] = color.r / 2; // only 127 bit max for this device
         midiSysExData.evt.midi_message[midiSysExData.evt.size++] = color.g / 2;
         midiSysExData.evt.midi_message[midiSysExData.evt.size++] = color.b / 2;
@@ -1000,7 +993,7 @@ class FaderportRGB_Midi_FeedbackProcessor : public Midi_FeedbackProcessor
 {
 public:
     virtual ~FaderportRGB_Midi_FeedbackProcessor() {}
-    FaderportRGB_Midi_FeedbackProcessor(CSurfIntegrator *const csi, Midi_ControlSurface *surface, Widget *widget, MIDI_event_ex_t *feedback1) : Midi_FeedbackProcessor(csi, surface, widget, feedback1) { }
+    FaderportRGB_Midi_FeedbackProcessor(CSurfIntegrator *const csi, Midi_ControlSurface *surface, Widget *widget, MIDI_event_ex_t feedback1) : Midi_FeedbackProcessor(csi, surface, widget, feedback1) { }
     
     virtual const char *GetName() override { return "FaderportRGB_Midi_FeedbackProcessor"; }
     
@@ -1020,10 +1013,10 @@ public:
     {
         lastColor_ = color;
         
-        SendMidiMessage(0x90, midiFeedbackMessage1_->midi_message[1], 0x7f);
-        SendMidiMessage(0x91, midiFeedbackMessage1_->midi_message[1], color.r / 2);  // only 127 bit allowed in Midi byte 3
-        SendMidiMessage(0x92, midiFeedbackMessage1_->midi_message[1], color.g / 2);
-        SendMidiMessage(0x93, midiFeedbackMessage1_->midi_message[1], color.b / 2);
+        SendMidiMessage(0x90, midiFeedbackMessage1_.midi_message[1], 0x7f);
+        SendMidiMessage(0x91, midiFeedbackMessage1_.midi_message[1], color.r / 2);  // only 127 bit allowed in Midi byte 3
+        SendMidiMessage(0x92, midiFeedbackMessage1_.midi_message[1], color.g / 2);
+        SendMidiMessage(0x93, midiFeedbackMessage1_.midi_message[1], color.b / 2);
     }
 };
 
@@ -1036,7 +1029,7 @@ private:
 
 public:
     virtual ~AsparionRGB_Midi_FeedbackProcessor() {}
-    AsparionRGB_Midi_FeedbackProcessor(CSurfIntegrator *const csi, Midi_ControlSurface *surface, Widget *widget, MIDI_event_ex_t *feedback1) : Midi_FeedbackProcessor(csi, surface, widget, feedback1)
+    AsparionRGB_Midi_FeedbackProcessor(CSurfIntegrator *const csi, Midi_ControlSurface *surface, Widget *widget, MIDI_event_ex_t feedback1) : Midi_FeedbackProcessor(csi, surface, widget, feedback1)
     {
         preventUpdateTrackColors_ = false;
     }
@@ -1059,9 +1052,9 @@ public:
     {
         lastColor_ = color;
         
-        SendMidiMessage(0x91, midiFeedbackMessage1_->midi_message[1], color.r / 2);  // max 127 allowed in Midi byte 3
-        SendMidiMessage(0x92, midiFeedbackMessage1_->midi_message[1], color.g / 2);
-        SendMidiMessage(0x93, midiFeedbackMessage1_->midi_message[1], color.b / 2);
+        SendMidiMessage(0x91, midiFeedbackMessage1_.midi_message[1], color.r / 2);  // max 127 allowed in Midi byte 3
+        SendMidiMessage(0x92, midiFeedbackMessage1_.midi_message[1], color.g / 2);
+        SendMidiMessage(0x93, midiFeedbackMessage1_.midi_message[1], color.b / 2);
     }
     
     virtual void ForceUpdateTrackColors() override
@@ -1083,7 +1076,7 @@ private:
     
 public:
     virtual ~Fader14Bit_Midi_FeedbackProcessor() {}
-    Fader14Bit_Midi_FeedbackProcessor(CSurfIntegrator *const csi, Midi_ControlSurface *surface, Widget *widget, MIDI_event_ex_t *feedback1) : Midi_FeedbackProcessor(csi, surface, widget, feedback1)
+    Fader14Bit_Midi_FeedbackProcessor(CSurfIntegrator *const csi, Midi_ControlSurface *surface, Widget *widget, MIDI_event_ex_t feedback1) : Midi_FeedbackProcessor(csi, surface, widget, feedback1)
     {
         shouldSetToZero_ = false;
         timeZeroValueReceived_ = 0;
@@ -1101,7 +1094,7 @@ public:
     {
         if (shouldSetToZero_ && (GetTickCount() - timeZeroValueReceived_) > 250)
         {
-            ForceMidiMessage(midiFeedbackMessage1_->midi_message[0], 0x00, 0x00);
+            ForceMidiMessage(midiFeedbackMessage1_.midi_message[0], 0x00, 0x00);
             shouldSetToZero_ = false;
         }
     }
@@ -1118,13 +1111,13 @@ public:
             shouldSetToZero_ = false;
     
         int volInt = int(value  *16383.0);
-        SendMidiMessage(midiFeedbackMessage1_->midi_message[0], volInt&0x7f, (volInt>>7)&0x7f);
+        SendMidiMessage(midiFeedbackMessage1_.midi_message[0], volInt&0x7f, (volInt>>7)&0x7f);
     }
     
     virtual void ForceValue(const PropertyList &properties, double value) override
     {
         int volInt = int(value  *16383.0);
-        ForceMidiMessage(midiFeedbackMessage1_->midi_message[0], volInt&0x7f, (volInt>>7)&0x7f);
+        ForceMidiMessage(midiFeedbackMessage1_.midi_message[0], volInt&0x7f, (volInt>>7)&0x7f);
     }
 };
 
@@ -1138,7 +1131,7 @@ private:
     
 public:
     virtual ~FaderportClassicFader14Bit_Midi_FeedbackProcessor() {}
-    FaderportClassicFader14Bit_Midi_FeedbackProcessor(CSurfIntegrator *const csi, Midi_ControlSurface *surface, Widget *widget, MIDI_event_ex_t *feedback1, MIDI_event_ex_t *feedback2) : Midi_FeedbackProcessor(csi, surface, widget, feedback1, feedback2)
+    FaderportClassicFader14Bit_Midi_FeedbackProcessor(CSurfIntegrator *const csi, Midi_ControlSurface *surface, Widget *widget, MIDI_event_ex_t feedback1, MIDI_event_ex_t feedback2) : Midi_FeedbackProcessor(csi, surface, widget, feedback1, feedback2)
     {
         shouldSetToZero_ = false;
         timeZeroValueReceived_ = 0;
@@ -1156,8 +1149,8 @@ public:
     {
         if (shouldSetToZero_ && (GetTickCount() - timeZeroValueReceived_) > 250)
         {
-            ForceMidiMessage(midiFeedbackMessage1_->midi_message[0], midiFeedbackMessage1_->midi_message[1], 0x00);
-            ForceMidiMessage(midiFeedbackMessage2_->midi_message[0], midiFeedbackMessage2_->midi_message[1], 0x00);
+            ForceMidiMessage(midiFeedbackMessage1_.midi_message[0], midiFeedbackMessage1_.midi_message[1], 0x00);
+            ForceMidiMessage(midiFeedbackMessage2_.midi_message[0], midiFeedbackMessage2_.midi_message[1], 0x00);
 
             shouldSetToZero_ = false;
         }
@@ -1176,13 +1169,13 @@ public:
     
         int volInt = int(value  *1024.0);
         
-        if (midiFeedbackMessage1_->midi_message[2] != ((volInt>>7)&0x7f) || midiFeedbackMessage2_->midi_message[2] != (volInt&0x7f))
+        if (midiFeedbackMessage1_.midi_message[2] != ((volInt>>7)&0x7f) || midiFeedbackMessage2_.midi_message[2] != (volInt&0x7f))
         {
-            midiFeedbackMessage1_->midi_message[2] = (volInt>>7)&0x7f;
-            midiFeedbackMessage2_->midi_message[2] = volInt&0x7f;
+            midiFeedbackMessage1_.midi_message[2] = (volInt>>7)&0x7f;
+            midiFeedbackMessage2_.midi_message[2] = volInt&0x7f;
          
-            SendMidiMessage(midiFeedbackMessage1_->midi_message[0], midiFeedbackMessage1_->midi_message[1], midiFeedbackMessage1_->midi_message[2]);
-            SendMidiMessage(midiFeedbackMessage2_->midi_message[0], midiFeedbackMessage2_->midi_message[1], midiFeedbackMessage2_->midi_message[2]);
+            SendMidiMessage(midiFeedbackMessage1_.midi_message[0], midiFeedbackMessage1_.midi_message[1], midiFeedbackMessage1_.midi_message[2]);
+            SendMidiMessage(midiFeedbackMessage2_.midi_message[0], midiFeedbackMessage2_.midi_message[1], midiFeedbackMessage2_.midi_message[2]);
         }
     }
     
@@ -1190,8 +1183,8 @@ public:
     {
         int volInt = int(value  *16383.0);
         
-        ForceMidiMessage(midiFeedbackMessage1_->midi_message[0], midiFeedbackMessage1_->midi_message[1], (volInt>>7)&0x7f);
-        ForceMidiMessage(midiFeedbackMessage2_->midi_message[0], midiFeedbackMessage2_->midi_message[1], volInt&0x7f);
+        ForceMidiMessage(midiFeedbackMessage1_.midi_message[0], midiFeedbackMessage1_.midi_message[1], (volInt>>7)&0x7f);
+        ForceMidiMessage(midiFeedbackMessage2_.midi_message[0], midiFeedbackMessage2_.midi_message[1], volInt&0x7f);
     }
 };
 
@@ -1201,7 +1194,7 @@ class Fader7Bit_Midi_FeedbackProcessor : public Midi_FeedbackProcessor
 {
 public:
     virtual ~Fader7Bit_Midi_FeedbackProcessor() {}
-    Fader7Bit_Midi_FeedbackProcessor(CSurfIntegrator *const csi, Midi_ControlSurface *surface, Widget *widget, MIDI_event_ex_t *feedback1) : Midi_FeedbackProcessor(csi, surface, widget, feedback1) { }
+    Fader7Bit_Midi_FeedbackProcessor(CSurfIntegrator *const csi, Midi_ControlSurface *surface, Widget *widget, MIDI_event_ex_t feedback1) : Midi_FeedbackProcessor(csi, surface, widget, feedback1) { }
     
     virtual const char *GetName() override { return "Fader7Bit_Midi_FeedbackProcessor"; }
 
@@ -1213,12 +1206,12 @@ public:
     
     virtual void SetValue(const PropertyList &properties, double value) override
     {
-        SendMidiMessage(midiFeedbackMessage1_->midi_message[0], midiFeedbackMessage1_->midi_message[1], int(value  *127.0));
+        SendMidiMessage(midiFeedbackMessage1_.midi_message[0], midiFeedbackMessage1_.midi_message[1], int(value  *127.0));
     }
     
     virtual void ForceValue(const PropertyList &properties, double value) override
     {
-        ForceMidiMessage(midiFeedbackMessage1_->midi_message[0], midiFeedbackMessage1_->midi_message[1], int(value  *127.0));
+        ForceMidiMessage(midiFeedbackMessage1_.midi_message[0], midiFeedbackMessage1_.midi_message[1], int(value  *127.0));
     }
 };
 
@@ -1228,7 +1221,7 @@ class Encoder_Midi_FeedbackProcessor : public Midi_FeedbackProcessor
 {
 public:
     virtual ~Encoder_Midi_FeedbackProcessor() {}
-    Encoder_Midi_FeedbackProcessor(CSurfIntegrator *const csi, Midi_ControlSurface *surface, Widget *widget, MIDI_event_ex_t *feedback1) : Midi_FeedbackProcessor(csi, surface, widget, feedback1) { }
+    Encoder_Midi_FeedbackProcessor(CSurfIntegrator *const csi, Midi_ControlSurface *surface, Widget *widget, MIDI_event_ex_t feedback1) : Midi_FeedbackProcessor(csi, surface, widget, feedback1) { }
     
     virtual const char *GetName() override { return "Encoder_Midi_FeedbackProcessor"; }
 
@@ -1240,12 +1233,12 @@ public:
     
     virtual void SetValue(const PropertyList &properties, double value) override
     {
-        SendMidiMessage(midiFeedbackMessage1_->midi_message[0], midiFeedbackMessage1_->midi_message[1] + 0x20, GetMidiValue(properties, value));
+        SendMidiMessage(midiFeedbackMessage1_.midi_message[0], midiFeedbackMessage1_.midi_message[1] + 0x20, GetMidiValue(properties, value));
     }
 
     virtual void ForceValue(const PropertyList &properties, double value) override
     {
-        ForceMidiMessage(midiFeedbackMessage1_->midi_message[0], midiFeedbackMessage1_->midi_message[1] + 0x20, GetMidiValue(properties, value));
+        ForceMidiMessage(midiFeedbackMessage1_.midi_message[0], midiFeedbackMessage1_.midi_message[1] + 0x20, GetMidiValue(properties, value));
     }
     
     int GetMidiValue(const PropertyList &properties, double value)
@@ -1290,7 +1283,7 @@ private:
     
 public:
     virtual ~AsparionEncoder_Midi_FeedbackProcessor() {}
-    AsparionEncoder_Midi_FeedbackProcessor(CSurfIntegrator *const csi, Midi_ControlSurface *surface, Widget *widget, MIDI_event_ex_t *feedback1) : Midi_FeedbackProcessor(csi, surface, widget, feedback1)
+    AsparionEncoder_Midi_FeedbackProcessor(CSurfIntegrator *const csi, Midi_ControlSurface *surface, Widget *widget, MIDI_event_ex_t feedback1) : Midi_FeedbackProcessor(csi, surface, widget, feedback1)
     {
         displayMode_ = 0;
     }
@@ -1305,12 +1298,12 @@ public:
     
     virtual void SetValue(const PropertyList &properties, double value) override
     {
-        SendMidiMessage(midiFeedbackMessage1_->midi_message[0] + displayMode_, midiFeedbackMessage1_->midi_message[1] + 0x20, GetMidiValue(properties, value));
+        SendMidiMessage(midiFeedbackMessage1_.midi_message[0] + displayMode_, midiFeedbackMessage1_.midi_message[1] + 0x20, GetMidiValue(properties, value));
     }
 
     virtual void ForceValue(const PropertyList &properties, double value) override
     {
-        ForceMidiMessage(midiFeedbackMessage1_->midi_message[0] + displayMode_, midiFeedbackMessage1_->midi_message[1] + 0x20, GetMidiValue(properties, value));
+        ForceMidiMessage(midiFeedbackMessage1_.midi_message[0] + displayMode_, midiFeedbackMessage1_.midi_message[1] + 0x20, GetMidiValue(properties, value));
     }
     
     int GetMidiValue(const PropertyList &properties, double value)
@@ -1336,7 +1329,7 @@ class ConsoleOneVUMeter_Midi_FeedbackProcessor : public Midi_FeedbackProcessor
 {
 public:
     virtual ~ConsoleOneVUMeter_Midi_FeedbackProcessor() {}
-    ConsoleOneVUMeter_Midi_FeedbackProcessor(CSurfIntegrator *const csi, Midi_ControlSurface *surface, Widget *widget, MIDI_event_ex_t *feedback1) : Midi_FeedbackProcessor(csi, surface, widget, feedback1) { }
+    ConsoleOneVUMeter_Midi_FeedbackProcessor(CSurfIntegrator *const csi, Midi_ControlSurface *surface, Widget *widget, MIDI_event_ex_t feedback1) : Midi_FeedbackProcessor(csi, surface, widget, feedback1) { }
     
     virtual const char *GetName() override { return "ConsoleOneVUMeter_Midi_FeedbackProcessor"; }
 
@@ -1348,12 +1341,12 @@ public:
     
     virtual void SetValue(const PropertyList &properties, double value) override
     {
-        SendMidiMessage(midiFeedbackMessage1_->midi_message[0], midiFeedbackMessage1_->midi_message[1], GetMidiValue(value));
+        SendMidiMessage(midiFeedbackMessage1_.midi_message[0], midiFeedbackMessage1_.midi_message[1], GetMidiValue(value));
     }
 
     virtual void ForceValue(const PropertyList &properties, double value) override
     {
-        ForceMidiMessage(midiFeedbackMessage1_->midi_message[0], midiFeedbackMessage1_->midi_message[1], GetMidiValue(value));
+        ForceMidiMessage(midiFeedbackMessage1_.midi_message[0], midiFeedbackMessage1_.midi_message[1], GetMidiValue(value));
     }
     
     int GetMidiValue(double value)
@@ -1381,7 +1374,7 @@ private:
     
 public:
     virtual ~ConsoleOneGainReductionMeter_Midi_FeedbackProcessor() {}
-    ConsoleOneGainReductionMeter_Midi_FeedbackProcessor(CSurfIntegrator *const csi, Midi_ControlSurface *surface, Widget *widget, MIDI_event_ex_t *feedback1) : Midi_FeedbackProcessor(csi, surface, widget, feedback1)
+    ConsoleOneGainReductionMeter_Midi_FeedbackProcessor(CSurfIntegrator *const csi, Midi_ControlSurface *surface, Widget *widget, MIDI_event_ex_t feedback1) : Midi_FeedbackProcessor(csi, surface, widget, feedback1)
     {
         minDB_ = 0.0;
         maxDB_ = 24.0;
@@ -1397,12 +1390,12 @@ public:
     
     virtual void SetValue(const PropertyList &properties, double value) override
     {
-        SendMidiMessage(midiFeedbackMessage1_->midi_message[0], midiFeedbackMessage1_->midi_message[1], int(fabs(1.0 - value)  *127.0));
+        SendMidiMessage(midiFeedbackMessage1_.midi_message[0], midiFeedbackMessage1_.midi_message[1], int(fabs(1.0 - value)  *127.0));
     }
 
     virtual void ForceValue(const PropertyList &properties, double value) override
     {
-        ForceMidiMessage(midiFeedbackMessage1_->midi_message[0], midiFeedbackMessage1_->midi_message[1], int(fabs(1.0 - value)  *127.0));
+        ForceMidiMessage(midiFeedbackMessage1_.midi_message[0], midiFeedbackMessage1_.midi_message[1], int(fabs(1.0 - value)  *127.0));
     }
 };
 
@@ -2762,7 +2755,7 @@ class MFT_RGB_Midi_FeedbackProcessor : public Midi_FeedbackProcessor
 {
 public:
     virtual ~MFT_RGB_Midi_FeedbackProcessor() {}
-    MFT_RGB_Midi_FeedbackProcessor(CSurfIntegrator *const csi, Midi_ControlSurface *surface, Widget *widget, MIDI_event_ex_t *feedback1) : Midi_FeedbackProcessor(csi, surface, widget, feedback1) { }
+    MFT_RGB_Midi_FeedbackProcessor(CSurfIntegrator *const csi, Midi_ControlSurface *surface, Widget *widget, MIDI_event_ex_t feedback1) : Midi_FeedbackProcessor(csi, surface, widget, feedback1) { }
   
     virtual const char *GetName() override { return "MFT_RGB_Midi_FeedbackProcessor"; }
 
@@ -2788,11 +2781,11 @@ public:
         {
             int colour = GetColorIntFromRGB(color.r, color.g, color.b);
             if (colour == 0)
-                SendMidiMessage(midiFeedbackMessage1_->midi_message[0] + 1, midiFeedbackMessage1_->midi_message[1], 17); // turn off led
+                SendMidiMessage(midiFeedbackMessage1_.midi_message[0] + 1, midiFeedbackMessage1_.midi_message[1], 17); // turn off led
             else
             {
-                SendMidiMessage(midiFeedbackMessage1_->midi_message[0], midiFeedbackMessage1_->midi_message[1], colour); // set color
-                SendMidiMessage(midiFeedbackMessage1_->midi_message[0] + 1, midiFeedbackMessage1_->midi_message[1], 47);  // turn on led max brightness
+                SendMidiMessage(midiFeedbackMessage1_.midi_message[0], midiFeedbackMessage1_.midi_message[1], colour); // set color
+                SendMidiMessage(midiFeedbackMessage1_.midi_message[0] + 1, midiFeedbackMessage1_.midi_message[1], 47);  // turn on led max brightness
             }
         }
     }

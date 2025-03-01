@@ -864,6 +864,8 @@ public:
       feedbackProcessors_.clear();
     }
     
+    vector<FeedbackProcessor *> &GetFeedbackProcessors() { return feedbackProcessors_; }
+    
     void ClearHasBeenUsedByUpdate() { hasBeenUsedByUpdate_ = false; }
     void SetHasBeenUsedByUpdate() { hasBeenUsedByUpdate_ = true; }
     bool GetHasBeenUsedByUpdate() { return hasBeenUsedByUpdate_; }
@@ -896,13 +898,7 @@ public:
     void SetXTouchDisplayColors(const char *colors);
     void RestoreXTouchDisplayColors();
     void ForceClear();
-    void LogInput(double value);
-    
-    void AddFeedbackProcessor(FeedbackProcessor *feedbackProcessor) // takes ownership of feedbackProcessor
-    {
-        if (feedbackProcessor != NULL)
-            feedbackProcessors_.push_back(feedbackProcessor);
-    }
+    void LogInput(double value);    
 };
 
 ////////////////////////////
@@ -2464,16 +2460,15 @@ class Midi_FeedbackProcessor : public FeedbackProcessor
 protected:
     Midi_ControlSurface *const surface_;
     
-    MIDI_event_ex_t *lastMessageSent_;
-    MIDI_event_ex_t *midiFeedbackMessage1_;
-    MIDI_event_ex_t *midiFeedbackMessage2_;
+    MIDI_event_ex_t lastMessageSent_;
+    MIDI_event_ex_t midiFeedbackMessage1_;
+    MIDI_event_ex_t midiFeedbackMessage2_;
     
-    Midi_FeedbackProcessor(CSurfIntegrator *const csi, Midi_ControlSurface *surface, Widget *widget, MIDI_event_ex_t *feedback1 = NULL, MIDI_event_ex_t *feedback2 = NULL) : FeedbackProcessor(csi, widget), surface_(surface)
-    {
-        lastMessageSent_ = new MIDI_event_ex_t(0, 0, 0);
-        midiFeedbackMessage1_ = feedback1 ? feedback1 : new MIDI_event_ex_t(0, 0, 0);
-        midiFeedbackMessage2_ = feedback2 ? feedback2 : new MIDI_event_ex_t(0, 0, 0);
-    }
+    Midi_FeedbackProcessor(CSurfIntegrator *const csi, Midi_ControlSurface *surface, Widget *widget) : FeedbackProcessor(csi, widget), surface_(surface) {}
+    
+    Midi_FeedbackProcessor(CSurfIntegrator *const csi, Midi_ControlSurface *surface, Widget *widget, MIDI_event_ex_t feedback1) : FeedbackProcessor(csi, widget), surface_(surface), midiFeedbackMessage1_(feedback1) {}
+    
+    Midi_FeedbackProcessor(CSurfIntegrator *const csi, Midi_ControlSurface *surface, Widget *widget, MIDI_event_ex_t feedback1, MIDI_event_ex_t feedback2) : FeedbackProcessor(csi, widget), surface_(surface), midiFeedbackMessage1_(feedback1), midiFeedbackMessage2_(feedback2) {}
     
     void SendMidiSysExMessage(MIDI_event_ex_t *midiMessage);
     void SendMidiMessage(int first, int second, int third);
@@ -2481,16 +2476,7 @@ protected:
 
 public:
     ~Midi_FeedbackProcessor()
-    {
-        if (lastMessageSent_ != NULL)
-            delete lastMessageSent_;
-        
-        if (midiFeedbackMessage1_ != NULL)
-            delete midiFeedbackMessage1_;
-        
-        if (midiFeedbackMessage2_ != NULL)
-            delete midiFeedbackMessage2_;
-    }
+    { }
     
     virtual const char *GetName() override { return "Midi_FeedbackProcessor"; }
 };
