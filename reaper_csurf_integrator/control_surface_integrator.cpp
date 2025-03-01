@@ -1505,41 +1505,11 @@ MediaTrack *FocusedFXNavigator::GetTrack()
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // ActionContext
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-ActionContext::ActionContext(CSurfIntegrator *const csi, Action *action, Widget *widget, Zone *zone, int paramIndex, const vector<string> &paramsAndProperties, const string *stringParam): csi_(csi), action_(action), widget_(widget), zone_(zone)
+ActionContext::ActionContext(CSurfIntegrator *const csi, Action *action, Widget *widget, Zone *zone, int paramIndex, const vector<string> &paramsAndProperties, const string *stringParam): csi_(csi), action_(action), widget_(widget), zone_(zone), paramIndex_(paramIndex)
 {
-    intParam_ = 0;
-    supportsColor_ = false;
-    supportsTrackColor_ = false;
-    provideFeedback_ = true;
-    
     if (stringParam != NULL)
         stringParam_ = *stringParam;
-    
-    paramIndex_ = paramIndex;
-    
-    commandId_ = 0;
-    
-    rangeMinimum_ = 0.0;
-    rangeMaximum_ = 1.0;
-    
-    steppedValuesIndex_ = 0;
-    
-    deltaValue_ = 0.0;
-    accumulatedIncTicks_ = 0;
-    accumulatedDecTicks_ = 0;
-    
-    isValueInverted_ = false;
-    isFeedbackInverted_ = false;
-    holdDelayAmount_ = 0;
-    delayStartTimeValid_ = false;
-    delayStartTime_ = 0;
-    deferredValue_ = 0.0;
-    
-    supportsColor_ = false;
-    currentColorIndex_ = 0;
-    
-    supportsTrackColor_ = false;
-    
+
     vector<string> params_wr;
     const vector<string> &params = params_wr;
     
@@ -2029,9 +1999,8 @@ void Zone::InitSubZones(const vector<string> &subZones, const char *widgetSuffix
     {
         if (zoneInfo.find(subZones[i]) != zoneInfo.end())
         {
-            SubZone *subZone = new SubZone(csi_, zoneManager_, GetNavigator(), GetSlotIndex(), subZones[i], zoneInfo[subZones[i]].alias, zoneInfo[subZones[i]].filePath, this);
-            zoneManager_->LoadZoneFile(subZone, widgetSuffix);
-            subZones_.push_back(subZone);
+            subZones_.push_back(make_unique<SubZone>(csi_, zoneManager_, GetNavigator(), GetSlotIndex(), subZones[i], zoneInfo[subZones[i]].alias, zoneInfo[subZones[i]].filePath, this));
+            zoneManager_->LoadZoneFile(subZones_.back().get(), widgetSuffix);
         }
     }
 }
@@ -2087,11 +2056,11 @@ void Zone::Activate()
 
     zoneManager_->GetSurface()->SendOSCMessage(GetName());
 
-    for (int i = 0; i < subZones_.size(); ++i)
-        subZones_[i]->Deactivate();
+    for (auto &subZone : subZones_)
+        subZone->Deactivate();
 
-    for (int i = 0; i < includedZones_.size(); ++i)
-        includedZones_[i]->Activate();
+    for (auto &includedZone : includedZones_)
+        includedZone->Activate();
 }
 
 void Zone::Deactivate()
@@ -2117,11 +2086,11 @@ void Zone::Deactivate()
     else if (!strcmp(GetName(), "SelectedTracks"))
         zoneManager_->GetSurface()->GetPage()->SelectedTracksModeDeactivated();
     
-    for (int i = 0; i < includedZones_.size(); ++i)
-        includedZones_[i]->Deactivate();
+    for (auto &includedZone : includedZones_)
+        includedZone->Deactivate();
 
-    for (int i = 0; i < subZones_.size(); ++i)
-        subZones_[i]->Deactivate();
+    for (auto &subZone : subZones_)
+        subZone->Deactivate();
 }
 
 void Zone::RequestUpdate()
@@ -2129,11 +2098,11 @@ void Zone::RequestUpdate()
     if (! isActive_)
         return;
     
-    for (int i = 0; i < subZones_.size(); ++i)
-        subZones_[i]->RequestUpdate();
+    for (auto &subZone : subZones_)
+        subZone->RequestUpdate();
 
-    for (int i =  0; i < includedZones_.size(); ++i)
-        includedZones_[i]->RequestUpdate();
+    for (auto &includedZone : includedZones_)
+        includedZone->RequestUpdate();
     
     for (auto widget : widgets_)
     {
@@ -2162,8 +2131,8 @@ void Zone::DoAction(Widget *widget, bool &isUsed, double value)
     if (! isActive_ || isUsed)
         return;
         
-    for (int i = 0; i < subZones_.size(); ++i)
-        subZones_[i]->DoAction(widget, isUsed, value);
+    for (auto &subZone : subZones_)
+        subZone->DoAction(widget, isUsed, value);
 
     if (isUsed)
         return;
@@ -2184,8 +2153,8 @@ void Zone::DoAction(Widget *widget, bool &isUsed, double value)
     }
     else
     {
-        for (int i = 0; i < includedZones_.size(); ++i)
-            includedZones_[i]->DoAction(widget, isUsed, value);
+        for (auto &includedZone : includedZones_)
+            includedZone->DoAction(widget, isUsed, value);
     }
 }
 
@@ -2194,8 +2163,8 @@ void Zone::DoRelativeAction(Widget *widget, bool &isUsed, double delta)
     if (! isActive_ || isUsed)
         return;
     
-    for (int i = 0; i < subZones_.size(); ++i)
-        subZones_[i]->DoRelativeAction(widget, isUsed, delta);
+    for (auto &subZone : subZones_)
+        subZone->DoRelativeAction(widget, isUsed, delta);
 
     if (isUsed)
         return;
@@ -2216,8 +2185,8 @@ void Zone::DoRelativeAction(Widget *widget, bool &isUsed, double delta)
     }
     else
     {
-        for (int i = 0; i < includedZones_.size(); ++i)
-            includedZones_[i]->DoRelativeAction(widget, isUsed, delta);
+        for (auto &includedZone : includedZones_)
+            includedZone->DoRelativeAction(widget, isUsed, delta);
     }
 }
 
@@ -2226,8 +2195,8 @@ void Zone::DoRelativeAction(Widget *widget, bool &isUsed, int accelerationIndex,
     if (! isActive_ || isUsed)
         return;
 
-    for (int i = 0; i < subZones_.size(); ++i)
-        subZones_[i]->DoRelativeAction(widget, isUsed, accelerationIndex, delta);
+    for (auto &subZone : subZones_)
+        subZone->DoRelativeAction(widget, isUsed, accelerationIndex, delta);
     
     if (isUsed)
         return;
@@ -2248,8 +2217,8 @@ void Zone::DoRelativeAction(Widget *widget, bool &isUsed, int accelerationIndex,
     }
     else
     {
-        for (int i = 0; i < includedZones_.size(); ++i)
-            includedZones_[i]->DoRelativeAction(widget, isUsed, accelerationIndex, delta);
+        for (auto &includedZone : includedZones_)
+            includedZone->DoRelativeAction(widget, isUsed, accelerationIndex, delta);
     }
 }
 
@@ -2258,8 +2227,8 @@ void Zone::DoTouch(Widget *widget, const char *widgetName, bool &isUsed, double 
     if (! isActive_ || isUsed)
         return;
 
-    for (int i = 0; i < subZones_.size(); ++i)
-        subZones_[i]->DoTouch(widget, widgetName, isUsed, value);
+    for (auto &subZone : subZones_)
+        subZone->DoTouch(widget, widgetName, isUsed, value);
     
     if (isUsed)
         return;
@@ -2280,8 +2249,8 @@ void Zone::DoTouch(Widget *widget, const char *widgetName, bool &isUsed, double 
     }
     else
     {
-        for (int i = 0; i < includedZones_.size(); ++i)
-            includedZones_[i]->DoTouch(widget, widgetName, isUsed, value);
+        for (auto &includedZone : includedZones_)
+            includedZone->DoTouch(widget, widgetName, isUsed, value);
     }
 }
 
@@ -2293,11 +2262,11 @@ void Zone::UpdateCurrentActionContextModifiers()
         widget->Configure(GetActionContexts(widget, currentActionContextModifiers_[widget]));
     }
     
-    for (int i = 0; i < includedZones_.size(); ++i)
-        includedZones_[i]->UpdateCurrentActionContextModifiers();
+    for (auto &includedZone : includedZones_)
+        includedZone->UpdateCurrentActionContextModifiers();
 
-    for (int i = 0; i < subZones_.size(); ++i)
-        subZones_[i]->UpdateCurrentActionContextModifiers();
+    for (auto &subZone : subZones_)
+        subZone->UpdateCurrentActionContextModifiers();
 }
 
 void Zone::UpdateCurrentActionContextModifier(Widget *widget)
@@ -2633,7 +2602,7 @@ void ZoneManager::GetNavigatorsForZone(const char *zoneName, const char *navigat
         navigators.push_back(GetSelectedTrackNavigator());
 }
 
-void ZoneManager::LoadZones(vector<Zone *> &zones, vector<string> &zoneList)
+void ZoneManager::LoadZones(vector<unique_ptr<Zone>> &zones, vector<string> &zoneList)
 {
     for (int i = 0; i < zoneList.size(); ++i)
     {
@@ -2655,12 +2624,8 @@ void ZoneManager::LoadZones(vector<Zone *> &zones, vector<string> &zoneList)
             
             if (navigators.size() == 1)
             {
-                Zone *zone = new Zone(csi_, this, navigators[0], 0, string(zoneName), zoneInfo_[zoneName].alias, zoneInfo_[zoneName].filePath);
-                if (zone)
-                {
-                    LoadZoneFile(zone, "");
-                    zones.push_back(zone);
-                }
+                zones.push_back(make_unique<Zone>(csi_, this, navigators[0], 0, string(zoneName), zoneInfo_[zoneName].alias, zoneInfo_[zoneName].filePath));
+                LoadZoneFile(zones.back().get(), "");
             }
             else if (navigators.size() > 1)
             {
@@ -2669,13 +2634,9 @@ void ZoneManager::LoadZones(vector<Zone *> &zones, vector<string> &zoneList)
                     char buf[MEDBUF];
                     snprintf(buf, sizeof(buf), "%s%d", string(zoneName).c_str(), j + 1);
                     
-                    Zone *zone = new Zone(csi_, this, navigators[j], j, string(zoneName), string(buf), zoneInfo_[zoneName].filePath);
-                    if (zone)
-                    {
-                        snprintf(buf, sizeof(buf), "%d", j + 1);
-                        LoadZoneFile(zone, buf);
-                        zones.push_back(zone);
-                    }
+                    zones.push_back(make_unique<Zone>(csi_, this, navigators[j], j, string(zoneName), string(buf), zoneInfo_[zoneName].filePath));
+                    snprintf(buf, sizeof(buf), "%d", j + 1);
+                    LoadZoneFile(zones.back().get(), buf);
                 }
             }
         }
@@ -3562,13 +3523,7 @@ bool ControlSurface::GetScrub()
 void ControlSurface::SetModifierValue(int value)
 {
     if (zoneManager_->GetIsBroadcaster() && usesLocalModifiers_)
-    {
         modifierManager_->SetModifierValue(value);
-        
-        for (int i = 0; i < zoneManager_->GetListeners().size(); ++i)
-            if (zoneManager_->GetListeners()[i]->GetSurface()->GetListensToModifiers() && ! zoneManager_->GetListeners()[i]->GetSurface()->GetUsesLocalModifiers() && zoneManager_->GetListeners()[i]->GetSurface()->GetName() != name_)
-                zoneManager_->GetListeners()[i]->GetSurface()->GetModifierManager()->SetShift(value, latchTime_);
-    }
     else if (usesLocalModifiers_)
         modifierManager_->SetModifierValue(value);
     else
@@ -3581,9 +3536,9 @@ void ControlSurface::SetShift(bool value)
     {
         modifierManager_->SetShift(value, latchTime_);
         
-        for (int i = 0; i < zoneManager_->GetListeners().size(); ++i)
-            if (zoneManager_->GetListeners()[i]->GetSurface()->GetListensToModifiers() && ! zoneManager_->GetListeners()[i]->GetSurface()->GetUsesLocalModifiers() && zoneManager_->GetListeners()[i]->GetSurface()->GetName() != name_)
-                zoneManager_->GetListeners()[i]->GetSurface()->GetModifierManager()->SetShift(value, latchTime_);
+        for (auto &listener : zoneManager_->GetListeners())
+            if (listener->GetSurface()->GetListensToModifiers() && ! listener->GetSurface()->GetUsesLocalModifiers() &listener->GetSurface()->GetName() != name_)
+                listener->GetSurface()->GetModifierManager()->SetShift(value, latchTime_);
     }
     else if (usesLocalModifiers_)
         modifierManager_->SetShift(value, latchTime_);
@@ -3597,9 +3552,9 @@ void ControlSurface::SetOption(bool value)
     {
         modifierManager_->SetOption(value, latchTime_);
         
-        for (int i = 0; i < zoneManager_->GetListeners().size(); ++i)
-            if (zoneManager_->GetListeners()[i]->GetSurface()->GetListensToModifiers() && ! zoneManager_->GetListeners()[i]->GetSurface()->GetUsesLocalModifiers() && zoneManager_->GetListeners()[i]->GetSurface()->GetName() != name_)
-                zoneManager_->GetListeners()[i]->GetSurface()->GetModifierManager()->SetOption(value, latchTime_);
+        for (auto &listener : zoneManager_->GetListeners())
+            if (listener->GetSurface()->GetListensToModifiers() && ! listener->GetSurface()->GetUsesLocalModifiers() &listener->GetSurface()->GetName() != name_)
+                listener->GetSurface()->GetModifierManager()->SetOption(value, latchTime_);
     }
     else if (usesLocalModifiers_)
         modifierManager_->SetOption(value, latchTime_);
@@ -3613,9 +3568,9 @@ void ControlSurface::SetControl(bool value)
     {
         modifierManager_->SetControl(value, latchTime_);
         
-        for (int i = 0; i < zoneManager_->GetListeners().size(); ++i)
-            if (zoneManager_->GetListeners()[i]->GetSurface()->GetListensToModifiers() && ! zoneManager_->GetListeners()[i]->GetSurface()->GetUsesLocalModifiers() && zoneManager_->GetListeners()[i]->GetSurface()->GetName() != name_)
-                zoneManager_->GetListeners()[i]->GetSurface()->GetModifierManager()->SetControl(value, latchTime_);
+        for (auto &listener : zoneManager_->GetListeners())
+            if (listener->GetSurface()->GetListensToModifiers() && ! listener->GetSurface()->GetUsesLocalModifiers() &listener->GetSurface()->GetName() != name_)
+                listener->GetSurface()->GetModifierManager()->SetControl(value, latchTime_);
     }
     else if (usesLocalModifiers_)
         modifierManager_->SetControl(value, latchTime_);
@@ -3629,9 +3584,9 @@ void ControlSurface::SetAlt(bool value)
     {
         modifierManager_->SetAlt(value, latchTime_);
         
-        for (int i = 0; i < zoneManager_->GetListeners().size(); ++i)
-            if (zoneManager_->GetListeners()[i]->GetSurface()->GetListensToModifiers() && ! zoneManager_->GetListeners()[i]->GetSurface()->GetUsesLocalModifiers() && zoneManager_->GetListeners()[i]->GetSurface()->GetName() != name_)
-                zoneManager_->GetListeners()[i]->GetSurface()->GetModifierManager()->SetAlt(value, latchTime_);
+        for (auto &listener : zoneManager_->GetListeners())
+            if (listener->GetSurface()->GetListensToModifiers() && ! listener->GetSurface()->GetUsesLocalModifiers() &listener->GetSurface()->GetName() != name_)
+                listener->GetSurface()->GetModifierManager()->SetAlt(value, latchTime_);
     }
     else if (usesLocalModifiers_)
         modifierManager_->SetAlt(value, latchTime_);
@@ -3645,9 +3600,9 @@ void ControlSurface::SetFlip(bool value)
     {
         modifierManager_->SetFlip(value, latchTime_);
         
-        for (int i = 0; i < zoneManager_->GetListeners().size(); ++i)
-            if (zoneManager_->GetListeners()[i]->GetSurface()->GetListensToModifiers() && ! zoneManager_->GetListeners()[i]->GetSurface()->GetUsesLocalModifiers() && zoneManager_->GetListeners()[i]->GetSurface()->GetName() != name_)
-                zoneManager_->GetListeners()[i]->GetSurface()->GetModifierManager()->SetFlip(value, latchTime_);
+        for (auto &listener : zoneManager_->GetListeners())
+            if (listener->GetSurface()->GetListensToModifiers() && ! listener->GetSurface()->GetUsesLocalModifiers() &listener->GetSurface()->GetName() != name_)
+                listener->GetSurface()->GetModifierManager()->SetFlip(value, latchTime_);
     }
     else if (usesLocalModifiers_)
         modifierManager_->SetFlip(value, latchTime_);
@@ -3661,9 +3616,9 @@ void ControlSurface::SetGlobal(bool value)
     {
         modifierManager_->SetGlobal(value, latchTime_);
         
-        for (int i = 0; i < zoneManager_->GetListeners().size(); ++i)
-            if (zoneManager_->GetListeners()[i]->GetSurface()->GetListensToModifiers() && ! zoneManager_->GetListeners()[i]->GetSurface()->GetUsesLocalModifiers() && zoneManager_->GetListeners()[i]->GetSurface()->GetName() != name_)
-                zoneManager_->GetListeners()[i]->GetSurface()->GetModifierManager()->SetGlobal(value, latchTime_);
+        for (auto &listener : zoneManager_->GetListeners())
+            if (listener->GetSurface()->GetListensToModifiers() && ! listener->GetSurface()->GetUsesLocalModifiers() &listener->GetSurface()->GetName() != name_)
+                listener->GetSurface()->GetModifierManager()->SetGlobal(value, latchTime_);
     }
     else if (usesLocalModifiers_)
         modifierManager_->SetGlobal(value, latchTime_);
@@ -3677,9 +3632,9 @@ void ControlSurface::SetMarker(bool value)
     {
         modifierManager_->SetMarker(value, latchTime_);
         
-        for (int i = 0; i < zoneManager_->GetListeners().size(); ++i)
-            if (zoneManager_->GetListeners()[i]->GetSurface()->GetListensToModifiers() && ! zoneManager_->GetListeners()[i]->GetSurface()->GetUsesLocalModifiers() && zoneManager_->GetListeners()[i]->GetSurface()->GetName() != name_)
-                zoneManager_->GetListeners()[i]->GetSurface()->GetModifierManager()->SetMarker(value, latchTime_);
+        for (auto &listener : zoneManager_->GetListeners())
+            if (listener->GetSurface()->GetListensToModifiers() && ! listener->GetSurface()->GetUsesLocalModifiers() &listener->GetSurface()->GetName() != name_)
+                listener->GetSurface()->GetModifierManager()->SetMarker(value, latchTime_);
     }
     else if (usesLocalModifiers_)
         modifierManager_->SetMarker(value, latchTime_);
@@ -3693,9 +3648,9 @@ void ControlSurface::SetNudge(bool value)
     {
         modifierManager_->SetNudge(value, latchTime_);
         
-        for (int i = 0; i < zoneManager_->GetListeners().size(); ++i)
-            if (zoneManager_->GetListeners()[i]->GetSurface()->GetListensToModifiers() && ! zoneManager_->GetListeners()[i]->GetSurface()->GetUsesLocalModifiers() && zoneManager_->GetListeners()[i]->GetSurface()->GetName() != name_)
-                zoneManager_->GetListeners()[i]->GetSurface()->GetModifierManager()->SetNudge(value, latchTime_);
+        for (auto &listener : zoneManager_->GetListeners())
+            if (listener->GetSurface()->GetListensToModifiers() && ! listener->GetSurface()->GetUsesLocalModifiers() &listener->GetSurface()->GetName() != name_)
+                listener->GetSurface()->GetModifierManager()->SetNudge(value, latchTime_);
     }
     else if (usesLocalModifiers_)
         modifierManager_->SetNudge(value, latchTime_);
@@ -3709,9 +3664,9 @@ void ControlSurface::SetZoom(bool value)
     {
         modifierManager_->SetZoom(value, latchTime_);
         
-        for (int i = 0; i < zoneManager_->GetListeners().size(); ++i)
-            if (zoneManager_->GetListeners()[i]->GetSurface()->GetListensToModifiers() && ! zoneManager_->GetListeners()[i]->GetSurface()->GetUsesLocalModifiers() && zoneManager_->GetListeners()[i]->GetSurface()->GetName() != name_)
-                zoneManager_->GetListeners()[i]->GetSurface()->GetModifierManager()->SetZoom(value, latchTime_);
+        for (auto &listener : zoneManager_->GetListeners())
+            if (listener->GetSurface()->GetListensToModifiers() && ! listener->GetSurface()->GetUsesLocalModifiers() &listener->GetSurface()->GetName() != name_)
+                listener->GetSurface()->GetModifierManager()->SetZoom(value, latchTime_);
     }
     else if (usesLocalModifiers_)
         modifierManager_->SetZoom(value, latchTime_);
@@ -3725,9 +3680,9 @@ void ControlSurface::SetScrub(bool value)
     {
         modifierManager_->SetScrub(value, latchTime_);
         
-        for (int i = 0; i < zoneManager_->GetListeners().size(); ++i)
-            if (zoneManager_->GetListeners()[i]->GetSurface()->GetListensToModifiers() && ! zoneManager_->GetListeners()[i]->GetSurface()->GetUsesLocalModifiers() && zoneManager_->GetListeners()[i]->GetSurface()->GetName() != name_)
-                zoneManager_->GetListeners()[i]->GetSurface()->GetModifierManager()->SetScrub(value, latchTime_);
+        for (auto &listener : zoneManager_->GetListeners())
+            if (listener->GetSurface()->GetListensToModifiers() && ! listener->GetSurface()->GetUsesLocalModifiers() &listener->GetSurface()->GetName() != name_)
+                listener->GetSurface()->GetModifierManager()->SetScrub(value, latchTime_);
     }
     else if (usesLocalModifiers_)
         modifierManager_->SetScrub(value, latchTime_);
@@ -3749,9 +3704,9 @@ void ControlSurface::ClearModifier(const char *modifier)
     {
         modifierManager_->ClearModifier(modifier);
         
-        for (int i = 0; i < zoneManager_->GetListeners().size(); ++i)
-            if (zoneManager_->GetListeners()[i]->GetSurface()->GetListensToModifiers() && ! zoneManager_->GetListeners()[i]->GetSurface()->GetUsesLocalModifiers() && zoneManager_->GetListeners()[i]->GetSurface()->GetName() != name_)
-                zoneManager_->GetListeners()[i]->GetSurface()->GetModifierManager()->ClearModifier(modifier);
+        for (auto &listener : zoneManager_->GetListeners())
+            if (listener->GetSurface()->GetListensToModifiers() && ! listener->GetSurface()->GetUsesLocalModifiers() &listener->GetSurface()->GetName() != name_)
+                listener->GetSurface()->GetModifierManager()->ClearModifier(modifier);
     }
     else if (usesLocalModifiers_ || listensToModifiers_)
         modifierManager_->ClearModifier(modifier);
@@ -3765,9 +3720,9 @@ void ControlSurface::ClearModifiers()
     {
         modifierManager_->ClearModifiers();
         
-        for (int i = 0; i < zoneManager_->GetListeners().size(); ++i)
-            if (zoneManager_->GetListeners()[i]->GetSurface()->GetListensToModifiers() && ! zoneManager_->GetListeners()[i]->GetSurface()->GetUsesLocalModifiers() && zoneManager_->GetListeners()[i]->GetSurface()->GetName() != name_)
-                zoneManager_->GetListeners()[i]->GetSurface()->GetModifierManager()->ClearModifiers();
+        for (auto &listener : zoneManager_->GetListeners())
+            if (listener->GetSurface()->GetListensToModifiers() && ! listener->GetSurface()->GetUsesLocalModifiers() &listener->GetSurface()->GetName() != name_)
+                listener->GetSurface()->GetModifierManager()->ClearModifiers();
     }
     else if (usesLocalModifiers_ || listensToModifiers_)
         modifierManager_->ClearModifiers();

@@ -454,42 +454,42 @@ private:
     Widget  *const widget_;
     Zone  *const zone_;
 
-    int intParam_;
+    int intParam_ = 0;
     
     string stringParam_;
     
-    int paramIndex_;
+    int paramIndex_ = 0;
     string fxParamDisplayName_;
     
-    int commandId_;
+    int commandId_ = 0;
     
-    double rangeMinimum_;
-    double rangeMaximum_;
+    double rangeMinimum_ = 0.0;
+    double rangeMaximum_ = 1.0;
     
     vector<double> steppedValues_;
-    int steppedValuesIndex_;
+    int steppedValuesIndex_= 0;
     
-    double deltaValue_;
+    double deltaValue_ = 0.0;
     vector<double> acceleratedDeltaValues_;
     vector<int> acceleratedTickValues_;
-    int accumulatedIncTicks_;
-    int accumulatedDecTicks_;
+    int accumulatedIncTicks_ = 0;
+    int accumulatedDecTicks_ = 0;
     
-    bool isValueInverted_;
-    bool isFeedbackInverted_;
-    DWORD holdDelayAmount_;
-    DWORD delayStartTime_;
-    bool delayStartTimeValid_;
-    double deferredValue_;
+    bool isValueInverted_ = false;
+    bool isFeedbackInverted_ = false;
+    int  holdDelayAmount_ = 0;
+    int  delayStartTime_ = 0;
+    bool delayStartTimeValid_= false;
+    double deferredValue_ = 0.0;
     
-    bool supportsColor_;
+    bool supportsColor_ = false;
     vector<rgba_color> colorValues_;
-    int currentColorIndex_;
+    int currentColorIndex_ = 0;
     
-    bool supportsTrackColor_;
+    bool supportsTrackColor_ = false;
         
-    bool provideFeedback_;
-
+    bool provideFeedback_= true;
+    
     PropertyList widgetProperties_;
         
     void UpdateTrackColor();
@@ -698,9 +698,8 @@ protected:
     map<Widget *, int> currentActionContextModifiers_;
     map<Widget *, map<int, vector<ActionContext*> > > actionContextDictionary_;
 
-    vector<Zone *> includedZones_;
-
-    vector<Zone *> subZones_;
+    vector<unique_ptr<Zone>> includedZones_;
+    vector<unique_ptr<Zone>> subZones_;
 
     void UpdateCurrentActionContextModifier(Widget *widget);
     
@@ -711,6 +710,7 @@ public:
     {
         includedZones_.clear();
         subZones_.clear();
+        actionContextDictionary_.clear();
     }
     
     void InitSubZones(const vector<string> &subZones, const char *widgetSuffix);
@@ -732,7 +732,7 @@ public:
     const vector<Widget *> &GetWidgets() { return widgets_; }
 
     const char *GetSourceFilePath() { return sourceFilePath_.c_str(); }
-    vector<Zone *> &GetIncludedZones() { return includedZones_; }
+    vector<unique_ptr<Zone>> &GetIncludedZones() { return includedZones_; }
 
     Navigator *GetNavigator() { return navigator_; }
     void SetNavigator(Navigator *navigator) {  navigator_ = navigator; }
@@ -777,8 +777,8 @@ public:
     {
         isActive_ = true;
         
-        for (int i = 0; i < includedZones_.size(); ++i)
-            includedZones_[i]->Activate();
+        for (auto &includedZone : includedZones_)
+            includedZone->Activate();
     }
 
     void RequestUpdateWidget(Widget *widget)
@@ -792,15 +792,15 @@ public:
     
     virtual void GoSubZone(const char *subZoneName)
     {
-        for (int i = 0; i < subZones_.size(); ++i)
+        for (auto &subZone : subZones_)
         {
-            if ( ! strcmp(subZones_[i]->GetName(), subZoneName))
+            if ( ! strcmp(subZone->GetName(), subZoneName))
             {
-                subZones_[i]->SetSlotIndex(GetSlotIndex());
-                subZones_[i]->Activate();
+                subZone->SetSlotIndex(GetSlotIndex());
+                subZone->Activate();
             }
             else
-                subZones_[i]->Deactivate();
+                subZone->Deactivate();
         }
     }
 };
@@ -935,7 +935,7 @@ private:
     
     Zone *homeZone_ = NULL;
 
-    vector<Zone *> goZones_;
+    vector<unique_ptr<Zone>> goZones_;
 
     vector<ZoneManager *> listeners_;
     
@@ -970,7 +970,7 @@ private:
     void GetWidgetNameAndModifiers(const string &line, string &baseWidgetName, int &modifier, bool &isValueInverted, bool &isFeedbackInverted, double &holdDelayAmount,
                                    bool &isDecrease, bool &isIncrease);
     void GetNavigatorsForZone(const char *zoneName, const char *navigatorName, vector<Navigator *> &navigators);
-    void LoadZones(vector<Zone *> &zones, vector<string> &zoneList);
+    void LoadZones(vector<unique_ptr<Zone>> &zones, vector<string> &zoneList);
          
     void DoAction(Widget *widget, double value, bool &isUsed);
     void DoRelativeAction(Widget *widget, double delta, bool &isUsed);
@@ -1045,17 +1045,17 @@ private:
     void ListenToGoZone(const char *zoneName)
     {
         if (!strcmp("SelectedTrackSend", zoneName) && listensToSends_)
-            for (int i = 0; i < listeners_.size(); ++i)
-                listeners_[i]->GoZone(zoneName);
+            for (auto &listener : listeners_)
+                listener->GoZone(zoneName);
         else if (!strcmp("SelectedTrackReceive", zoneName) && listensToReceives_)
-            for (int i = 0; i < listeners_.size(); ++i)
-                listeners_[i]->GoZone(zoneName);
+            for (auto &listener : listeners_)
+                listener->GoZone(zoneName);
         else if (!strcmp("SelectedTrackFX", zoneName) && listensToSelectedTrackFX_)
-            for (int i = 0; i < listeners_.size(); ++i)
-                listeners_[i]->GoZone(zoneName);
+            for (auto &listener : listeners_)
+                listener->GoZone(zoneName);
         else if (!strcmp("SelectedTrackFXMenu", zoneName) && listensToFXMenu_)
-            for (int i = 0; i < listeners_.size(); ++i)
-                listeners_[i]->GoZone(zoneName);
+            for (auto &listener : listeners_)
+                listener->GoZone(zoneName);
         else
             GoZone(zoneName);
     }
@@ -1063,17 +1063,17 @@ private:
     void ListenToClearFXZone(const char *zoneToClear)
     {
         if (!strcmp("LastTouchedFXParam", zoneToClear))
-            for (int i = 0; i < listeners_.size(); ++i)
-                listeners_[i]->ClearLastTouchedFXParam();
+            for (auto &listener : listeners_)
+                listener->ClearLastTouchedFXParam();
         else if (!strcmp("FocusedFX", zoneToClear))
-            for (int i = 0; i < listeners_.size(); ++i)
-                listeners_[i]->ClearFocusedFX();
+            for (auto &listener : listeners_)
+                listener->ClearFocusedFX();
         else if (!strcmp("SelectedTrackFX", zoneToClear) && listensToSelectedTrackFX_)
-            for (int i = 0; i < listeners_.size(); ++i)
-                listeners_[i]->ClearSelectedTrackFX();
+            for (auto &listener : listeners_)
+                listener->ClearSelectedTrackFX();
         else if (!strcmp("FXSlot", zoneToClear) && listensToFXMenu_)
-            for (int i = 0; i < listeners_.size(); ++i)
-                listeners_[i]->ClearFXSlot();
+            for (auto &listener : listeners_)
+                listener->ClearFXSlot();
     }
     
     void ListenToGoHome()
@@ -1361,8 +1361,8 @@ public:
         if (! GetIsBroadcaster() && ! GetIsListener()) // No Broadcasters/Listeners relationships defined
             GoZone(zoneName);
         else
-            for (int i = 0; i < listeners_.size(); ++i)
-                listeners_[i]->ListenToGoZone(zoneName);
+            for (auto &listener : listeners_)
+                listener->ListenToGoZone(zoneName);
     }
     
     void GoZone(const char *zoneName)
@@ -1411,8 +1411,8 @@ public:
                 ClearFXSlot();
         }
         else
-            for (int i = 0; i < listeners_.size(); ++i)
-                listeners_[i]->ListenToClearFXZone(zoneName);
+            for (auto &listener : listeners_)
+                listener->ListenToClearFXZone(zoneName);
     }
     
     void DeclareGoFXSlot(MediaTrack *track, Navigator *navigator, int fxSlot)
@@ -1420,8 +1420,8 @@ public:
         if (usesLocalFXSlot_ || ( ! GetIsBroadcaster() && ! GetIsListener())) // No Broadcasters/Listeners relationships defined
             GoFXSlot(track, navigator, fxSlot);
         else
-            for (int i = 0; i < listeners_.size(); ++i)
-                listeners_[i]->ListenToGoFXSlot(track, navigator, fxSlot);
+            for (auto &listener : listeners_)
+                listener->ListenToGoFXSlot(track, navigator, fxSlot);
     }
                       
     void GetName(MediaTrack *track, int fxIndex, char *name, int namesz)
@@ -1478,8 +1478,8 @@ public:
         if (! GetIsBroadcaster() && ! GetIsListener()) // No Broadcasters/Listeners relationships defined
             GoHome();
         else
-            for (int i = 0; i < listeners_.size(); ++i)
-                listeners_[i]->ListenToGoHome();
+            for (auto &listener : listeners_)
+                listener->ListenToGoHome();
     }
         
     void OnTrackSelection()
@@ -1513,8 +1513,8 @@ public:
         if (! GetIsBroadcaster() && ! GetIsListener()) // No Broadcasters/Listeners relationships defined
             ToggleEnableLastTouchedFXParamMapping();
         else
-            for (int i = 0; i < listeners_.size(); ++i)
-                listeners_[i]->ListenToToggleEnableLastTouchedFXParamMapping();
+            for (auto &listener : listeners_)
+                listener->ListenToToggleEnableLastTouchedFXParamMapping();
     }
 
     void DisableLastTouchedFXParamMapping()
@@ -1527,8 +1527,8 @@ public:
         if (! GetIsBroadcaster() && ! GetIsListener()) // No Broadcasters/Listeners relationships defined
             ToggleEnableFocusedFXMapping();
         else
-            for (int i = 0; i < listeners_.size(); ++i)
-                listeners_[i]->ListenToToggleEnableFocusedFXMapping();
+            for (auto &listener : listeners_)
+                listener->ListenToToggleEnableFocusedFXMapping();
     }
     
     void DisableFocusedFXMapping()
@@ -2015,8 +2015,8 @@ protected:
     CSurfIntegrator *const csi_;
     Page *const page_;
     string const name_;
-    ZoneManager *zoneManager_ = NULL;
-    ModifierManager *modifierManager_;
+    unique_ptr<ZoneManager> zoneManager_;
+    unique_ptr<ModifierManager> modifierManager_;
     
     int const numChannels_;
     int const channelOffset_;
@@ -2046,9 +2046,8 @@ protected:
     
     void InitZoneManager(CSurfIntegrator *const csi, ControlSurface *surface, const string &zoneFolder, const string &fxZoneFolder)
     {
-        zoneManager_ = new ZoneManager(csi_, this, zoneFolder, fxZoneFolder);
-        if (zoneManager_)
-            zoneManager_->Initialize();
+        zoneManager_ = make_unique<ZoneManager>(csi_, this, zoneFolder, fxZoneFolder);
+        zoneManager_->Initialize();
     }
     
     void StopRewinding()
@@ -2102,8 +2101,6 @@ public:
         widgets_.clear();
         widgetsByName_.clear();
         CSIMessageGeneratorsByMessage_.clear();
-        delete zoneManager_;
-        delete modifierManager_;
     }
     
     void Stop();
@@ -2153,8 +2150,8 @@ public:
     virtual void SendMidiSysExMessage(MIDI_event_ex_t *midiMessage) {}
     virtual void SendMidiMessage(int first, int second, int third) {}
     
-    ModifierManager *GetModifierManager() { return modifierManager_; }
-    ZoneManager *GetZoneManager() { return zoneManager_; }
+    ModifierManager *GetModifierManager() { return modifierManager_.get(); }
+    ZoneManager *GetZoneManager() { return zoneManager_.get(); }
     Page *GetPage() { return page_; }
     const char *GetName() { return name_.c_str(); }
     
