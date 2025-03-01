@@ -831,7 +831,7 @@ protected:
     CSurfIntegrator *const csi_;
     ControlSurface *const surface_;
     string const name_;
-    vector<FeedbackProcessor *> feedbackProcessors_; // owns the objects
+    vector<unique_ptr<FeedbackProcessor>> feedbackProcessors_; // owns the objects
     int channelNumber_ = 0;
     int lastIncomingMessageTime_ = GetTickCount() - 30000;
     double lastIncomingDelta_ = 0.0;
@@ -864,7 +864,7 @@ public:
       feedbackProcessors_.clear();
     }
     
-    vector<FeedbackProcessor *> &GetFeedbackProcessors() { return feedbackProcessors_; }
+    vector<unique_ptr<FeedbackProcessor>> &GetFeedbackProcessors() { return feedbackProcessors_; }
     
     void ClearHasBeenUsedByUpdate() { hasBeenUsedByUpdate_ = false; }
     void SetHasBeenUsedByUpdate() { hasBeenUsedByUpdate_ = true; }

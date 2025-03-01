@@ -542,82 +542,82 @@ void Midi_ControlSurface::ProcessMidiWidget(int &lineNumber, ifstream &surfaceTe
         // Feedback Processors
         if (widgetType == "FB_TwoState" && size == 7)
         {
-            widget->GetFeedbackProcessors().push_back(new TwoState_Midi_FeedbackProcessor(csi_, this, widget, message1, message2));
+            widget->GetFeedbackProcessors().push_back(make_unique<TwoState_Midi_FeedbackProcessor>(csi_, this, widget, message1, message2));
         }
         else if (widgetType == "FB_NovationLaunchpadMiniRGB7Bit" && size == 4)
         {
-            widget->GetFeedbackProcessors().push_back(new NovationLaunchpadMiniRGB7Bit_Midi_FeedbackProcessor(csi_, this, widget, message1));
+            widget->GetFeedbackProcessors().push_back(make_unique<NovationLaunchpadMiniRGB7Bit_Midi_FeedbackProcessor>(csi_, this, widget, message1));
         }
         else if (widgetType == "FB_MFT_RGB" && size == 4)
         {
-            widget->GetFeedbackProcessors().push_back(new MFT_RGB_Midi_FeedbackProcessor(csi_, this, widget, message1));
+            widget->GetFeedbackProcessors().push_back(make_unique<MFT_RGB_Midi_FeedbackProcessor>(csi_, this, widget, message1));
         }
         else if (widgetType == "FB_AsparionRGB" && size == 4)
         {
-            widget->GetFeedbackProcessors().push_back(new AsparionRGB_Midi_FeedbackProcessor(csi_, this, widget, message1));
-            AddTrackColorFeedbackProcessor(widget->GetFeedbackProcessors().back());
+            widget->GetFeedbackProcessors().push_back(make_unique<AsparionRGB_Midi_FeedbackProcessor>(csi_, this, widget, message1));
+            AddTrackColorFeedbackProcessor(widget->GetFeedbackProcessors().back().get());
         }
         else if (widgetType == "FB_FaderportRGB" && size == 4)
         {
-            widget->GetFeedbackProcessors().push_back(new FaderportRGB_Midi_FeedbackProcessor(csi_, this, widget, message1));
+            widget->GetFeedbackProcessors().push_back(make_unique<FaderportRGB_Midi_FeedbackProcessor>(csi_, this, widget, message1));
         }
         else if (widgetType == "FB_FaderportTwoStateRGB" && size == 4)
         {
-            widget->GetFeedbackProcessors().push_back(new FPTwoStateRGB_Midi_FeedbackProcessor(csi_, this, widget, message1));
+            widget->GetFeedbackProcessors().push_back(make_unique<FPTwoStateRGB_Midi_FeedbackProcessor>(csi_, this, widget, message1));
         }
         else if (widgetType == "FB_FaderportValueBar"  && size == 2)
         {
-            widget->GetFeedbackProcessors().push_back(new FPValueBar_Midi_FeedbackProcessor(csi_, this, widget, atoi(tokenLines[i][1].c_str())));
+            widget->GetFeedbackProcessors().push_back(make_unique<FPValueBar_Midi_FeedbackProcessor>(csi_, this, widget, atoi(tokenLines[i][1].c_str())));
         }
         else if ((widgetType == "FB_FPVUMeter") && size == 2)
         {
-            widget->GetFeedbackProcessors().push_back(new FPVUMeter_Midi_FeedbackProcessor(csi_, this, widget, atoi(tokenLines[i][1].c_str())));
+            widget->GetFeedbackProcessors().push_back(make_unique<FPVUMeter_Midi_FeedbackProcessor>(csi_, this, widget, atoi(tokenLines[i][1].c_str())));
         }
         else if (widgetType == "FB_Fader14Bit" && size == 4)
         {
-            widget->GetFeedbackProcessors().push_back(new Fader14Bit_Midi_FeedbackProcessor(csi_, this, widget, message1));
+            widget->GetFeedbackProcessors().push_back(make_unique<Fader14Bit_Midi_FeedbackProcessor>(csi_, this, widget, message1));
         }
         else if (widgetType == "FB_FaderportClassicFader14Bit" && size == 7)
         {
-            widget->GetFeedbackProcessors().push_back(new FaderportClassicFader14Bit_Midi_FeedbackProcessor(csi_, this, widget, message1, message2));
+            widget->GetFeedbackProcessors().push_back(make_unique<FaderportClassicFader14Bit_Midi_FeedbackProcessor>(csi_, this, widget, message1, message2));
         }
         else if (widgetType == "FB_Fader7Bit" && size == 4)
         {
-            widget->GetFeedbackProcessors().push_back(new Fader7Bit_Midi_FeedbackProcessor(csi_, this, widget, message1));
+            widget->GetFeedbackProcessors().push_back(make_unique<Fader7Bit_Midi_FeedbackProcessor>(csi_, this, widget, message1));
         }
         else if (widgetType == "FB_Encoder" && size == 4)
         {
-            widget->GetFeedbackProcessors().push_back(new Encoder_Midi_FeedbackProcessor(csi_, this, widget, message1));
+            widget->GetFeedbackProcessors().push_back(make_unique<Encoder_Midi_FeedbackProcessor>(csi_, this, widget, message1));
         }
         else if (widgetType == "FB_AsparionEncoder" && size == 4)
         {
-            widget->GetFeedbackProcessors().push_back(new AsparionEncoder_Midi_FeedbackProcessor(csi_, this, widget, message1));
+            widget->GetFeedbackProcessors().push_back(make_unique<AsparionEncoder_Midi_FeedbackProcessor>(csi_, this, widget, message1));
         }
         else if (widgetType == "FB_ConsoleOneVUMeter" && size == 4)
         {
-            widget->GetFeedbackProcessors().push_back(new ConsoleOneVUMeter_Midi_FeedbackProcessor(csi_, this, widget, message1));
+            widget->GetFeedbackProcessors().push_back(make_unique<ConsoleOneVUMeter_Midi_FeedbackProcessor>(csi_, this, widget, message1));
         }
         else if (widgetType == "FB_ConsoleOneGainReductionMeter" && size == 4)
         {
-            widget->GetFeedbackProcessors().push_back(new ConsoleOneGainReductionMeter_Midi_FeedbackProcessor(csi_, this, widget, message1));
+            widget->GetFeedbackProcessors().push_back(make_unique<ConsoleOneGainReductionMeter_Midi_FeedbackProcessor>(csi_, this, widget, message1));
         }
         else if (widgetType == "FB_MCUTimeDisplay" && size == 1)
         {
-            widget->GetFeedbackProcessors().push_back(new MCU_TimeDisplay_Midi_FeedbackProcessor(csi_, this, widget));
+            widget->GetFeedbackProcessors().push_back(make_unique<MCU_TimeDisplay_Midi_FeedbackProcessor>(csi_, this, widget));
         }
         else if (widgetType == "FB_MCUAssignmentDisplay" && size == 1)
         {
-            widget->GetFeedbackProcessors().push_back(new FB_MCU_AssignmentDisplay_Midi_FeedbackProcessor(csi_, this, widget));
+            widget->GetFeedbackProcessors().push_back(make_unique<FB_MCU_AssignmentDisplay_Midi_FeedbackProcessor>(csi_, this, widget));
         }
         else if (widgetType == "FB_QConProXMasterVUMeter" && size == 2)
         {
-            widget->GetFeedbackProcessors().push_back(new QConProXMasterVUMeter_Midi_FeedbackProcessor(csi_, this, widget, atoi(tokenLines[i][1].c_str())));
+            widget->GetFeedbackProcessors().push_back(make_unique<QConProXMasterVUMeter_Midi_FeedbackProcessor>(csi_, this, widget, atoi(tokenLines[i][1].c_str())));
         }
         else if ((widgetType == "FB_MCUVUMeter" || widgetType == "FB_MCUXTVUMeter") && size == 2)
         {
             int displayType = widgetType == "FB_MCUVUMeter" ? 0x14 : 0x15;
             
-            widget->GetFeedbackProcessors().push_back(new MCUVUMeter_Midi_FeedbackProcessor(csi_, this, widget, displayType, atoi(tokenLines[i][1].c_str())));
+            widget->GetFeedbackProcessors().push_back(make_unique<MCUVUMeter_Midi_FeedbackProcessor>(csi_, this, widget, displayType, atoi(tokenLines[i][1].c_str())));
             
             SetHasMCUMeters(displayType);
         }
@@ -625,7 +625,7 @@ void Midi_ControlSurface::ProcessMidiWidget(int &lineNumber, ifstream &surfaceTe
         {
             bool isRight = widgetType == "FB_AsparionVUMeterR" ? true : false;
             
-            widget->GetFeedbackProcessors().push_back(new AsparionVUMeter_Midi_FeedbackProcessor(csi_, this, widget, 0x14, atoi(tokenLines[i][1].c_str()), isRight));
+            widget->GetFeedbackProcessors().push_back(make_unique<AsparionVUMeter_Midi_FeedbackProcessor>(csi_, this, widget, 0x14, atoi(tokenLines[i][1].c_str()), isRight));
             
             SetHasMCUMeters(0x14);
         }
@@ -636,7 +636,7 @@ void Midi_ControlSurface::ProcessMidiWidget(int &lineNumber, ifstream &surfaceTe
             midiEvent.midi_message[1] = strToHex(tokenLines[i][2]) + 0x60;
             midiEvent.midi_message[2] = strToHex(tokenLines[i][3]);
 
-            widget->GetFeedbackProcessors().push_back(new SCE24TwoStateLED_Midi_FeedbackProcessor(csi_, this, widget, midiEvent));
+            widget->GetFeedbackProcessors().push_back(make_unique<SCE24TwoStateLED_Midi_FeedbackProcessor>(csi_, this, widget, midiEvent));
         }
         else if (widgetType == "FB_SCE24OLEDButton" && size == 7)
         {
@@ -645,66 +645,66 @@ void Midi_ControlSurface::ProcessMidiWidget(int &lineNumber, ifstream &surfaceTe
             midiEvent.midi_message[1] = strToHex(tokenLines[i][2]) + 0x60;
             midiEvent.midi_message[2] = strToHex(tokenLines[i][3]);
             
-            widget->GetFeedbackProcessors().push_back(new SCE24OLED_Midi_FeedbackProcessor(csi_, this, widget, midiEvent, atoi(tokenLines[i][4].c_str()), atoi(tokenLines[i][5].c_str()), atoi(tokenLines[i][6].c_str())));
+            widget->GetFeedbackProcessors().push_back(make_unique<SCE24OLED_Midi_FeedbackProcessor>(csi_, this, widget, midiEvent, atoi(tokenLines[i][4].c_str()), atoi(tokenLines[i][5].c_str()), atoi(tokenLines[i][6].c_str())));
         }
         else if (widgetType == "FB_SCE24Encoder" && size == 4)
         {
-            widget->GetFeedbackProcessors().push_back(new SCE24Encoder_Midi_FeedbackProcessor(csi_, this, widget, message1));
+            widget->GetFeedbackProcessors().push_back(make_unique<SCE24Encoder_Midi_FeedbackProcessor>(csi_, this, widget, message1));
         }
         else if (widgetType == "FB_SCE24EncoderText" && size == 7)
         {
-            widget->GetFeedbackProcessors().push_back(new SCE24Text_Midi_FeedbackProcessor(csi_, this, widget, message1, atoi(tokenLines[i][4].c_str()), atoi(tokenLines[i][5].c_str()), atoi(tokenLines[i][6].c_str())));
+            widget->GetFeedbackProcessors().push_back(make_unique<SCE24Text_Midi_FeedbackProcessor>(csi_, this, widget, message1, atoi(tokenLines[i][4].c_str()), atoi(tokenLines[i][5].c_str()), atoi(tokenLines[i][6].c_str())));
         }
         else if ((widgetType == "FB_MCUDisplayUpper" || widgetType == "FB_MCUDisplayLower" || widgetType == "FB_MCUXTDisplayUpper" || widgetType == "FB_MCUXTDisplayLower") && size == 2)
         {
             if (widgetType == "FB_MCUDisplayUpper")
-                widget->GetFeedbackProcessors().push_back(new MCUDisplay_Midi_FeedbackProcessor(csi_, this, widget, 0, 0x14, 0x12, atoi(tokenLines[i][1].c_str())));
+                widget->GetFeedbackProcessors().push_back(make_unique<MCUDisplay_Midi_FeedbackProcessor>(csi_, this, widget, 0, 0x14, 0x12, atoi(tokenLines[i][1].c_str())));
             else if (widgetType == "FB_MCUDisplayLower")
-                widget->GetFeedbackProcessors().push_back(new MCUDisplay_Midi_FeedbackProcessor(csi_, this, widget, 1, 0x14, 0x12, atoi(tokenLines[i][1].c_str())));
+                widget->GetFeedbackProcessors().push_back(make_unique<MCUDisplay_Midi_FeedbackProcessor>(csi_, this, widget, 1, 0x14, 0x12, atoi(tokenLines[i][1].c_str())));
             else if (widgetType == "FB_MCUXTDisplayUpper")
-                widget->GetFeedbackProcessors().push_back(new MCUDisplay_Midi_FeedbackProcessor(csi_, this, widget, 0, 0x15, 0x12, atoi(tokenLines[i][1].c_str())));
+                widget->GetFeedbackProcessors().push_back(make_unique<MCUDisplay_Midi_FeedbackProcessor>(csi_, this, widget, 0, 0x15, 0x12, atoi(tokenLines[i][1].c_str())));
             else if (widgetType == "FB_MCUXTDisplayLower")
-                widget->GetFeedbackProcessors().push_back(new MCUDisplay_Midi_FeedbackProcessor(csi_, this, widget, 1, 0x15, 0x12, atoi(tokenLines[i][1].c_str())));
+                widget->GetFeedbackProcessors().push_back(make_unique<MCUDisplay_Midi_FeedbackProcessor>(csi_, this, widget, 1, 0x15, 0x12, atoi(tokenLines[i][1].c_str())));
         }
         else if ((widgetType == "FB_IconDisplay1Upper" || widgetType == "FB_IconDisplay1Lower" || widgetType == "FB_IconDisplay2Upper" || widgetType == "FB_IconDisplay2Lower") && size == 2)
         {
             if (widgetType == "FB_IconDisplay1Upper")
-                widget->GetFeedbackProcessors().push_back(new IconDisplay_Midi_FeedbackProcessor(csi_, this, widget, 0, 0x14, 0x12, atoi(tokenLines[i][1].c_str()), 0x00, 0x66));
+                widget->GetFeedbackProcessors().push_back(make_unique<IconDisplay_Midi_FeedbackProcessor>(csi_, this, widget, 0, 0x14, 0x12, atoi(tokenLines[i][1].c_str()), 0x00, 0x66));
             else if (widgetType == "FB_IconDisplay1Lower")
-                widget->GetFeedbackProcessors().push_back(new IconDisplay_Midi_FeedbackProcessor(csi_, this, widget, 1, 0x14, 0x12, atoi(tokenLines[i][1].c_str()), 0x00, 0x66));
+                widget->GetFeedbackProcessors().push_back(make_unique<IconDisplay_Midi_FeedbackProcessor>(csi_, this, widget, 1, 0x14, 0x12, atoi(tokenLines[i][1].c_str()), 0x00, 0x66));
             else if (widgetType == "FB_IconDisplay2Upper")
-                widget->GetFeedbackProcessors().push_back(new IconDisplay_Midi_FeedbackProcessor(csi_, this, widget, 0, 0x15, 0x13, atoi(tokenLines[i][1].c_str()), 0x02, 0x4e));
+                widget->GetFeedbackProcessors().push_back(make_unique<IconDisplay_Midi_FeedbackProcessor>(csi_, this, widget, 0, 0x15, 0x13, atoi(tokenLines[i][1].c_str()), 0x02, 0x4e));
             else if (widgetType == "FB_IconDisplay2Lower")
-                widget->GetFeedbackProcessors().push_back(new IconDisplay_Midi_FeedbackProcessor(csi_, this, widget, 1, 0x15, 0x13, atoi(tokenLines[i][1].c_str()), 0x02, 0x4e));
+                widget->GetFeedbackProcessors().push_back(make_unique<IconDisplay_Midi_FeedbackProcessor>(csi_, this, widget, 1, 0x15, 0x13, atoi(tokenLines[i][1].c_str()), 0x02, 0x4e));
         }
         else if ((widgetType == "FB_AsparionDisplayUpper" || widgetType == "FB_AsparionDisplayLower" || widgetType == "FB_AsparionDisplayEncoder") && size == 2)
         {
             if (widgetType == "FB_AsparionDisplayUpper")
-                widget->GetFeedbackProcessors().push_back(new AsparionDisplay_Midi_FeedbackProcessor(csi_, this, widget, 0x01, 0x14, 0x1A, atoi(tokenLines[i][1].c_str())));
+                widget->GetFeedbackProcessors().push_back(make_unique<AsparionDisplay_Midi_FeedbackProcessor>(csi_, this, widget, 0x01, 0x14, 0x1A, atoi(tokenLines[i][1].c_str())));
             else if (widgetType == "FB_AsparionDisplayLower")
-                widget->GetFeedbackProcessors().push_back(new AsparionDisplay_Midi_FeedbackProcessor(csi_, this, widget, 0x02, 0x14, 0x1A, atoi(tokenLines[i][1].c_str())));
+                widget->GetFeedbackProcessors().push_back(make_unique<AsparionDisplay_Midi_FeedbackProcessor>(csi_, this, widget, 0x02, 0x14, 0x1A, atoi(tokenLines[i][1].c_str())));
             else if (widgetType == "FB_AsparionDisplayEncoder")
-                widget->GetFeedbackProcessors().push_back(new AsparionDisplay_Midi_FeedbackProcessor(csi_, this, widget, 0x03, 0x14, 0x19, atoi(tokenLines[i][1].c_str())));
+                widget->GetFeedbackProcessors().push_back(make_unique<AsparionDisplay_Midi_FeedbackProcessor>(csi_, this, widget, 0x03, 0x14, 0x19, atoi(tokenLines[i][1].c_str())));
         }
         else if ((widgetType == "FB_XTouchDisplayUpper" || widgetType == "FB_XTouchDisplayLower" || widgetType == "FB_XTouchXTDisplayUpper" || widgetType == "FB_XTouchXTDisplayLower") && size == 2)
         {
             if (widgetType == "FB_XTouchDisplayUpper")
-                widget->GetFeedbackProcessors().push_back(new XTouchDisplay_Midi_FeedbackProcessor(csi_, this, widget, 0, 0x14, 0x12, atoi(tokenLines[i][1].c_str())));
+                widget->GetFeedbackProcessors().push_back(make_unique<XTouchDisplay_Midi_FeedbackProcessor>(csi_, this, widget, 0, 0x14, 0x12, atoi(tokenLines[i][1].c_str())));
             else if (widgetType == "FB_XTouchDisplayLower")
-                widget->GetFeedbackProcessors().push_back(new XTouchDisplay_Midi_FeedbackProcessor(csi_, this, widget, 1, 0x14, 0x12, atoi(tokenLines[i][1].c_str())));
+                widget->GetFeedbackProcessors().push_back(make_unique<XTouchDisplay_Midi_FeedbackProcessor>(csi_, this, widget, 1, 0x14, 0x12, atoi(tokenLines[i][1].c_str())));
             else if (widgetType == "FB_XTouchXTDisplayUpper")
-                widget->GetFeedbackProcessors().push_back(new XTouchDisplay_Midi_FeedbackProcessor(csi_, this, widget, 0, 0x15, 0x12, atoi(tokenLines[i][1].c_str())));
+                widget->GetFeedbackProcessors().push_back(make_unique<XTouchDisplay_Midi_FeedbackProcessor>(csi_, this, widget, 0, 0x15, 0x12, atoi(tokenLines[i][1].c_str())));
             else if (widgetType == "FB_XTouchXTDisplayLower")
-                widget->GetFeedbackProcessors().push_back(new XTouchDisplay_Midi_FeedbackProcessor(csi_, this, widget, 1, 0x15, 0x12, atoi(tokenLines[i][1].c_str())));
+                widget->GetFeedbackProcessors().push_back(make_unique<XTouchDisplay_Midi_FeedbackProcessor>(csi_, this, widget, 1, 0x15, 0x12, atoi(tokenLines[i][1].c_str())));
             
-            AddTrackColorFeedbackProcessor(widget->GetFeedbackProcessors().back());
+            AddTrackColorFeedbackProcessor(widget->GetFeedbackProcessors().back().get());
         }
         else if ((widgetType == "FB_C4DisplayUpper" || widgetType == "FB_C4DisplayLower") && size == 3)
         {
             if (widgetType == "FB_C4DisplayUpper")
-                widget->GetFeedbackProcessors().push_back(new MCUDisplay_Midi_FeedbackProcessor(csi_, this, widget, 0, 0x17, atoi(tokenLines[i][1].c_str()) + 0x30, atoi(tokenLines[i][2].c_str())));
+                widget->GetFeedbackProcessors().push_back(make_unique<MCUDisplay_Midi_FeedbackProcessor>(csi_, this, widget, 0, 0x17, atoi(tokenLines[i][1].c_str()) + 0x30, atoi(tokenLines[i][2].c_str())));
             else if (widgetType == "FB_C4DisplayLower")
-                widget->GetFeedbackProcessors().push_back(new MCUDisplay_Midi_FeedbackProcessor(csi_, this, widget, 1, 0x17, atoi(tokenLines[i][1].c_str()) + 0x30, atoi(tokenLines[i][2].c_str())));
+                widget->GetFeedbackProcessors().push_back(make_unique<MCUDisplay_Midi_FeedbackProcessor>(csi_, this, widget, 1, 0x17, atoi(tokenLines[i][1].c_str()) + 0x30, atoi(tokenLines[i][2].c_str())));
         }
         else if ((widgetType == "FB_FP8ScribbleLine1" || widgetType == "FB_FP16ScribbleLine1"
                  || widgetType == "FB_FP8ScribbleLine2" || widgetType == "FB_FP16ScribbleLine2"
@@ -712,40 +712,40 @@ void Midi_ControlSurface::ProcessMidiWidget(int &lineNumber, ifstream &surfaceTe
                  || widgetType == "FB_FP8ScribbleLine4" || widgetType == "FB_FP16ScribbleLine4") && size == 2)
         {
             if (widgetType == "FB_FP8ScribbleLine1")
-                widget->GetFeedbackProcessors().push_back(new FPDisplay_Midi_FeedbackProcessor(csi_, this, widget, 0x02, atoi(tokenLines[i][1].c_str()), 0x00));
+                widget->GetFeedbackProcessors().push_back(make_unique<FPDisplay_Midi_FeedbackProcessor>(csi_, this, widget, 0x02, atoi(tokenLines[i][1].c_str()), 0x00));
             else if (widgetType == "FB_FP8ScribbleLine2")
-                widget->GetFeedbackProcessors().push_back(new FPDisplay_Midi_FeedbackProcessor(csi_, this, widget, 0x02, atoi(tokenLines[i][1].c_str()), 0x01));
+                widget->GetFeedbackProcessors().push_back(make_unique<FPDisplay_Midi_FeedbackProcessor>(csi_, this, widget, 0x02, atoi(tokenLines[i][1].c_str()), 0x01));
             else if (widgetType == "FB_FP8ScribbleLine3")
-                widget->GetFeedbackProcessors().push_back(new FPDisplay_Midi_FeedbackProcessor(csi_, this, widget, 0x02, atoi(tokenLines[i][1].c_str()), 0x02));
+                widget->GetFeedbackProcessors().push_back(make_unique<FPDisplay_Midi_FeedbackProcessor>(csi_, this, widget, 0x02, atoi(tokenLines[i][1].c_str()), 0x02));
             else if (widgetType == "FB_FP8ScribbleLine4")
-                widget->GetFeedbackProcessors().push_back(new FPDisplay_Midi_FeedbackProcessor(csi_, this, widget, 0x02, atoi(tokenLines[i][1].c_str()), 0x03));
+                widget->GetFeedbackProcessors().push_back(make_unique<FPDisplay_Midi_FeedbackProcessor>(csi_, this, widget, 0x02, atoi(tokenLines[i][1].c_str()), 0x03));
 
             else if (widgetType == "FB_FP16ScribbleLine1")
-                widget->GetFeedbackProcessors().push_back(new FPDisplay_Midi_FeedbackProcessor(csi_, this, widget, 0x16, atoi(tokenLines[i][1].c_str()), 0x00));
+                widget->GetFeedbackProcessors().push_back(make_unique<FPDisplay_Midi_FeedbackProcessor>(csi_, this, widget, 0x16, atoi(tokenLines[i][1].c_str()), 0x00));
             else if (widgetType == "FB_FP16ScribbleLine2")
-                widget->GetFeedbackProcessors().push_back(new FPDisplay_Midi_FeedbackProcessor(csi_, this, widget, 0x16, atoi(tokenLines[i][1].c_str()), 0x01));
+                widget->GetFeedbackProcessors().push_back(make_unique<FPDisplay_Midi_FeedbackProcessor>(csi_, this, widget, 0x16, atoi(tokenLines[i][1].c_str()), 0x01));
             else if (widgetType == "FB_FP16ScribbleLine3")
-                widget->GetFeedbackProcessors().push_back(new FPDisplay_Midi_FeedbackProcessor(csi_, this, widget, 0x16, atoi(tokenLines[i][1].c_str()), 0x02));
+                widget->GetFeedbackProcessors().push_back(make_unique<FPDisplay_Midi_FeedbackProcessor>(csi_, this, widget, 0x16, atoi(tokenLines[i][1].c_str()), 0x02));
             else if (widgetType == "FB_FP16ScribbleLine4")
-                widget->GetFeedbackProcessors().push_back(new FPDisplay_Midi_FeedbackProcessor(csi_, this, widget, 0x16, atoi(tokenLines[i][1].c_str()), 0x03));
+                widget->GetFeedbackProcessors().push_back(make_unique<FPDisplay_Midi_FeedbackProcessor>(csi_, this, widget, 0x16, atoi(tokenLines[i][1].c_str()), 0x03));
         }
         else if ((widgetType == "FB_FP8ScribbleStripMode" || widgetType == "FB_FP16ScribbleStripMode") && size == 2)
         {
             if (widgetType == "FB_FP8ScribbleStripMode")
-                widget->GetFeedbackProcessors().push_back(new FPScribbleStripMode_Midi_FeedbackProcessor(csi_, this, widget, 0x02, atoi(tokenLines[i][1].c_str())));
+                widget->GetFeedbackProcessors().push_back(make_unique<FPScribbleStripMode_Midi_FeedbackProcessor>(csi_, this, widget, 0x02, atoi(tokenLines[i][1].c_str())));
             else if (widgetType == "FB_FP16ScribbleStripMode")
-                widget->GetFeedbackProcessors().push_back(new FPScribbleStripMode_Midi_FeedbackProcessor(csi_, this, widget, 0x16, atoi(tokenLines[i][1].c_str())));
+                widget->GetFeedbackProcessors().push_back(make_unique<FPScribbleStripMode_Midi_FeedbackProcessor>(csi_, this, widget, 0x16, atoi(tokenLines[i][1].c_str())));
         }
         else if ((widgetType == "FB_QConLiteDisplayUpper" || widgetType == "FB_QConLiteDisplayUpperMid" || widgetType == "FB_QConLiteDisplayLowerMid" || widgetType == "FB_QConLiteDisplayLower") && size == 2)
         {
             if (widgetType == "FB_QConLiteDisplayUpper")
-                widget->GetFeedbackProcessors().push_back(new QConLiteDisplay_Midi_FeedbackProcessor(csi_, this, widget, 0, 0x14, 0x12, atoi(tokenLines[i][1].c_str())));
+                widget->GetFeedbackProcessors().push_back(make_unique<QConLiteDisplay_Midi_FeedbackProcessor>(csi_, this, widget, 0, 0x14, 0x12, atoi(tokenLines[i][1].c_str())));
             else if (widgetType == "FB_QConLiteDisplayUpperMid")
-                widget->GetFeedbackProcessors().push_back(new QConLiteDisplay_Midi_FeedbackProcessor(csi_, this, widget, 1, 0x14, 0x12, atoi(tokenLines[i][1].c_str())));
+                widget->GetFeedbackProcessors().push_back(make_unique<QConLiteDisplay_Midi_FeedbackProcessor>(csi_, this, widget, 1, 0x14, 0x12, atoi(tokenLines[i][1].c_str())));
             else if (widgetType == "FB_QConLiteDisplayLowerMid")
-                widget->GetFeedbackProcessors().push_back(new QConLiteDisplay_Midi_FeedbackProcessor(csi_, this, widget, 2, 0x14, 0x12, atoi(tokenLines[i][1].c_str())));
+                widget->GetFeedbackProcessors().push_back(make_unique<QConLiteDisplay_Midi_FeedbackProcessor>(csi_, this, widget, 2, 0x14, 0x12, atoi(tokenLines[i][1].c_str())));
             else if (widgetType == "FB_QConLiteDisplayLower")
-                widget->GetFeedbackProcessors().push_back(new QConLiteDisplay_Midi_FeedbackProcessor(csi_, this, widget, 3, 0x14, 0x12, atoi(tokenLines[i][1].c_str())));
+                widget->GetFeedbackProcessors().push_back(make_unique<QConLiteDisplay_Midi_FeedbackProcessor>(csi_, this, widget, 3, 0x14, 0x12, atoi(tokenLines[i][1].c_str())));
         }
     }
 }
@@ -796,17 +796,17 @@ void OSC_ControlSurface::ProcessOSCWidget(int &lineNumber, ifstream &surfaceTemp
         else if (tokenLines[i].size() > 1 && tokenLines[i][0] == "X32RotaryToEncoder")
             CSIMessageGeneratorsByMessage_.insert(make_pair(tokenLines[i][1], make_unique<X32_RotaryToEncoder_OSC_MessageGenerator>(csi_, widget)));
         else if (tokenLines[i].size() > 1 && tokenLines[i][0] == "FB_Processor")
-            widget->GetFeedbackProcessors().push_back(new OSC_FeedbackProcessor(csi_, this, widget, tokenLines[i][1]));
+            widget->GetFeedbackProcessors().push_back(make_unique<OSC_FeedbackProcessor>(csi_, this, widget, tokenLines[i][1]));
         else if (tokenLines[i].size() > 1 && tokenLines[i][0] == "FB_IntProcessor")
-            widget->GetFeedbackProcessors().push_back(new OSC_IntFeedbackProcessor(csi_, this, widget, tokenLines[i][1]));
+            widget->GetFeedbackProcessors().push_back(make_unique<OSC_IntFeedbackProcessor>(csi_, this, widget, tokenLines[i][1]));
         else if (tokenLines[i].size() > 1 && tokenLines[i][0] == "FB_X32Processor")
-            widget->GetFeedbackProcessors().push_back(new OSC_X32FeedbackProcessor(csi_, this, widget, tokenLines[i][1]));
+            widget->GetFeedbackProcessors().push_back(make_unique<OSC_X32FeedbackProcessor>(csi_, this, widget, tokenLines[i][1]));
         else if (tokenLines[i].size() > 1 && tokenLines[i][0] == "FB_X32IntProcessor")
-            widget->GetFeedbackProcessors().push_back(new OSC_X32IntFeedbackProcessor(csi_, this, widget, tokenLines[i][1]));
+            widget->GetFeedbackProcessors().push_back(make_unique<OSC_X32IntFeedbackProcessor>(csi_, this, widget, tokenLines[i][1]));
         else if (tokenLines[i].size() > 1 && tokenLines[i][0] == "FB_X32FaderProcessor")
-            widget->GetFeedbackProcessors().push_back(new OSC_X32FaderFeedbackProcessor(csi_, this, widget, tokenLines[i][1]));
+            widget->GetFeedbackProcessors().push_back(make_unique<OSC_X32FaderFeedbackProcessor>(csi_, this, widget, tokenLines[i][1]));
         else if (tokenLines[i].size() > 1 && tokenLines[i][0] == "FB_X32RotaryToEncoder")
-            widget->GetFeedbackProcessors().push_back(new OSC_X32_RotaryToEncoderFeedbackProcessor(csi_, this, widget, tokenLines[i][1]));
+            widget->GetFeedbackProcessors().push_back(make_unique<OSC_X32_RotaryToEncoderFeedbackProcessor>(csi_, this, widget, tokenLines[i][1]));
     }
 }
 
@@ -2357,55 +2357,55 @@ ZoneManager *Widget::GetZoneManager()
 
 void Widget::Configure(const vector<ActionContext *> &contexts)
 {
-    for (auto feedbackProcessor : feedbackProcessors_)
+    for (auto &feedbackProcessor : feedbackProcessors_)
         feedbackProcessor->Configure(contexts);
 }
 
 void  Widget::UpdateValue(const PropertyList &properties, double value)
 {
-    for (auto feedbackProcessor : feedbackProcessors_)
+    for (auto &feedbackProcessor : feedbackProcessors_)
         feedbackProcessor->SetValue(properties, value);
 }
 
 void  Widget::UpdateValue(const PropertyList &properties, const char * const &value)
 {
-    for (auto feedbackProcessor : feedbackProcessors_)
+    for (auto &feedbackProcessor : feedbackProcessors_)
         feedbackProcessor->SetValue(properties, value);
 }
 
 void  Widget::ForceValue(const PropertyList &properties, const char * const &value)
 {
-    for (auto feedbackProcessor : feedbackProcessors_)
+    for (auto &feedbackProcessor : feedbackProcessors_)
         feedbackProcessor->ForceValue(properties, value);
 }
 
 void Widget::RunDeferredActions()
 {
-    for (auto feedbackProcessor : feedbackProcessors_)
+    for (auto &feedbackProcessor : feedbackProcessors_)
         feedbackProcessor->RunDeferredActions();
 }
 
 void  Widget::UpdateColorValue(const rgba_color &color)
 {
-    for (auto feedbackProcessor : feedbackProcessors_)
+    for (auto &feedbackProcessor : feedbackProcessors_)
         feedbackProcessor->SetColorValue(color);
 }
 
 void Widget::SetXTouchDisplayColors(const char *colors)
 {
-    for (auto feedbackProcessor : feedbackProcessors_)
+    for (auto &feedbackProcessor : feedbackProcessors_)
         feedbackProcessor->SetXTouchDisplayColors(colors);
 }
 
 void Widget::RestoreXTouchDisplayColors()
 {
-    for (auto feedbackProcessor : feedbackProcessors_)
+    for (auto &feedbackProcessor : feedbackProcessors_)
         feedbackProcessor->RestoreXTouchDisplayColors();
 }
 
 void  Widget::ForceClear()
 {
-    for (auto feedbackProcessor : feedbackProcessors_)
+    for (auto &feedbackProcessor : feedbackProcessors_)
         feedbackProcessor->ForceClear();
 }
 
