@@ -696,7 +696,7 @@ protected:
       
     vector<ActionContext *> emptyContexts_;
     map<Widget *, int> currentActionContextModifiers_;
-    map<Widget *, map<int, vector<ActionContext*> > > actionContextDictionary_;
+    map<Widget *, map<int, vector<ActionContext *>>> actionContextDictionary_;
 
     vector<unique_ptr<Zone>> includedZones_;
     vector<unique_ptr<Zone>> subZones_;
@@ -720,7 +720,8 @@ public:
     void UpdateCurrentActionContextModifiers();
     
     const vector<ActionContext *> &GetActionContexts(Widget *widget);
-   
+    ActionContext *AddActionContext(Widget *widget, int modifier, Zone *zone, const char *actionName, vector<string> &params);
+
     void AddWidget(Widget *widget);
     void Activate();
     void Deactivate();
@@ -760,11 +761,6 @@ public:
             return name_.c_str();
     }
             
-    void AddActionContext(Widget *widget, int modifier, ActionContext *actionContext)
-    {
-        actionContextDictionary_[widget][modifier].push_back(actionContext);
-    }
-    
     const vector<ActionContext *> &GetActionContexts(Widget *widget, int modifier)
     {
         if(actionContextDictionary_.count(widget) > 0 && actionContextDictionary_[widget].count(modifier) > 0)
@@ -783,7 +779,7 @@ public:
 
     void RequestUpdateWidget(Widget *widget)
     {
-        for (auto actionContext : GetActionContexts(widget))
+        for (auto &actionContext : GetActionContexts(widget))
         {
             actionContext->RunDeferredActions();
             actionContext->RequestUpdate();
@@ -933,11 +929,11 @@ private:
     
     Zone *learnFocusedFXZone_ = NULL;
     
-    Zone *homeZone_ = NULL;
+    unique_ptr<Zone> homeZone_;
 
     vector<unique_ptr<Zone>> goZones_;
 
-    vector<ZoneManager *> listeners_;
+    vector<ZoneManager *> listeners_; // does not own pointers
     
     vector<Zone *> zonesToBeDeleted_;
     
@@ -1164,13 +1160,7 @@ public:
     ZoneManager(CSurfIntegrator *const csi, ControlSurface *surface, const string &zoneFolder, const string &fxZoneFolder);
 
     ~ZoneManager()
-    {
-        if (homeZone_ != NULL)
-        {
-            delete homeZone_;
-            homeZone_ = NULL;
-        }
-            
+    {            
         if (focusedFXZone_ != NULL)
         {
             delete focusedFXZone_;
@@ -2951,11 +2941,11 @@ protected:
     vector<MediaTrack *> folderSpillTracks_;
     map<MediaTrack*, vector<MediaTrack*>> folderDictionary_;
  
-    vector<Navigator *> fixedTrackNavigators_;
-    vector<Navigator *> trackNavigators_;
-    Navigator *const masterTrackNavigator_;
-    Navigator *selectedTrackNavigator_;
-    Navigator *focusedFXNavigator_;
+    vector<unique_ptr<Navigator>> fixedTrackNavigators_;
+    vector<unique_ptr<Navigator>> trackNavigators_;
+    unique_ptr<Navigator> masterTrackNavigator_;
+    unique_ptr<Navigator> selectedTrackNavigator_;
+    unique_ptr<Navigator> focusedFXNavigator_;
     
     void ForceScrollLink()
     {
@@ -2964,7 +2954,7 @@ protected:
         
         if (selectedTrack != NULL)
         {
-            for (auto trackNavigator : trackNavigators_)
+            for (auto &trackNavigator : trackNavigators_)
                 if (selectedTrack == trackNavigator->GetTrack())
                     return;
             
@@ -2997,16 +2987,12 @@ public:
     synchPages_(synchPages),
     isScrollLinkEnabled_(isScrollLinkEnabled),
     isScrollSynchEnabled_(isScrollSynchEnabled),
-    masterTrackNavigator_(new MasterTrackNavigator(csi_, page_)),
-    selectedTrackNavigator_(new SelectedTrackNavigator(csi_, page_)),
-    focusedFXNavigator_(new FocusedFXNavigator(csi_, page_)) {}
+    masterTrackNavigator_(make_unique<MasterTrackNavigator>(csi_, page_)),
+    selectedTrackNavigator_(make_unique< SelectedTrackNavigator>(csi_, page_)),
+    focusedFXNavigator_(make_unique<FocusedFXNavigator>(csi_, page_)) {}
     
     ~TrackNavigationManager()
     {
-        delete masterTrackNavigator_;
-        delete selectedTrackNavigator_;
-        delete focusedFXNavigator_;
-        
         fixedTrackNavigators_.clear();
         trackNavigators_.clear();
     }
@@ -3018,9 +3004,9 @@ public:
     bool GetScrollLink() { return isScrollLinkEnabled_; }
     bool GetFollowMCP() { return followMCP_; }
     int  GetNumTracks() { return CSurf_NumTracks(followMCP_); }
-    Navigator *GetMasterTrackNavigator() { return masterTrackNavigator_; }
-    Navigator *GetSelectedTrackNavigator() { return selectedTrackNavigator_; }
-    Navigator *GetFocusedFXNavigator() { return focusedFXNavigator_; }
+    Navigator *GetMasterTrackNavigator() { return masterTrackNavigator_.get(); }
+    Navigator *GetSelectedTrackNavigator() { return selectedTrackNavigator_.get(); }
+    Navigator *GetFocusedFXNavigator() { return focusedFXNavigator_.get(); }
     
     bool GetIsTrackVisible(MediaTrack *track)
     {
@@ -3276,28 +3262,24 @@ public:
     
     Navigator *GetNavigatorForChannel(int channelNum)
     {
-        for (auto trackNavigator : trackNavigators_)
+        for (auto &trackNavigator : trackNavigators_)
             if (trackNavigator->GetChannelNum() == channelNum)
-                return trackNavigator;
+                return trackNavigator.get();
           
-        TrackNavigator *newNavigator = new TrackNavigator(csi_, page_, this, channelNum);
-        
-        trackNavigators_.push_back(newNavigator);
+        trackNavigators_.push_back(make_unique<TrackNavigator>(csi_, page_, this, channelNum));
             
-        return newNavigator;
+        return  trackNavigators_.back().get();
     }
     
     Navigator *GetNavigatorForTrack(MediaTrack *track)
     {
-        for (auto fixedTrackNavigator : fixedTrackNavigators_)
+        for (auto &fixedTrackNavigator : fixedTrackNavigators_)
             if (fixedTrackNavigator->GetTrack() == track)
-                return fixedTrackNavigator;
-          
-        FixedTrackNavigator *newNavigator = new FixedTrackNavigator(csi_, page_, track);
+                return fixedTrackNavigator.get();
         
-        fixedTrackNavigators_.push_back(newNavigator);
+        fixedTrackNavigators_.push_back(make_unique<FixedTrackNavigator>(csi_, page_, track));
             
-        return newNavigator;
+        return fixedTrackNavigators_.back().get();
     }
     
     MediaTrack *GetTrackFromChannel(int channelNumber)
@@ -3514,9 +3496,9 @@ public:
         if (track == GetMasterTrackNavigator()->GetTrack())
             return GetIsNavigatorTouched(GetMasterTrackNavigator(), touchedControl);
         
-        for (auto trackNavigator : trackNavigators_)
+        for (auto &trackNavigator : trackNavigators_)
             if (track == trackNavigator->GetTrack())
-                return GetIsNavigatorTouched(trackNavigator, touchedControl);
+                return GetIsNavigatorTouched(trackNavigator.get(), touchedControl);
  
         if (MediaTrack *selectedTrack = GetSelectedTrack())
              if (track == selectedTrack)
@@ -3678,8 +3660,8 @@ class Page
 protected:
     CSurfIntegrator *const csi_;
     string const name_;
-    TrackNavigationManager *trackNavigationManager_;
-    ModifierManager *modifierManager_;
+    unique_ptr<TrackNavigationManager> trackNavigationManager_;
+    unique_ptr<ModifierManager> modifierManager_;
     vector<unique_ptr<ControlSurface>> surfaces_;
     
 public:
@@ -3687,14 +3669,12 @@ public:
 
     ~Page()
     {
-        delete trackNavigationManager_;
-        delete modifierManager_;
         surfaces_.clear();
     }
         
     const char *GetName() { return name_.c_str(); }
     
-    ModifierManager *GetModifierManager() { return modifierManager_; }
+    ModifierManager *GetModifierManager() { return modifierManager_.get(); }
     
     vector<unique_ptr<ControlSurface>> &GetSurfaces() { return surfaces_; }
        
@@ -4071,39 +4051,22 @@ public:
             osara_outputMessage(phrase);
     }
     
-    // These direct calls are used by Learn to change Actions in the dynamic learnFXZone -- it allows for realtime editing, with results immediately visible in the hardware
-    Action *GetNoActionAction()
-    {
-        return actions_["NoAction"].get();
-    }
-    
     Action *GetFXParamAction(char *FXName)
     {
        if (strstr(FXName, "JS: "))
            return actions_["JSFXParam"].get();
        else
-        return actions_["FXParam"].get();
-    }
-        
-    Action *GetFixedTextDisplayAction()
-    {
-        return actions_["FixedTextDisplay"].get();
+           return actions_["FXParam"].get();
     }
     
-    Action *GetFXParamValueDisplayAction()
-    {
-        return actions_["FXParamValueDisplay"].get();
-    }
-    // End direct calls
-    
-    ActionContext *GetActionContext(const char *actionName, Widget *widget, Zone *zone, const vector<string> &params)
+    Action *GetAction(const char *actionName)
     {
         if (actions_.find(actionName) != actions_.end())
-            return new ActionContext(this, actions_[actionName].get(), widget, zone, 0, params, NULL);
+            return actions_[actionName].get();
         else
-            return new ActionContext(this, actions_["NoAction"].get(), widget, zone, 0, params, NULL);
+            return actions_["NoAction"].get();
     }
-
+    
     void OnTrackSelection(MediaTrack *track) override
     {
         if (pages_.size() > currentPageIndex_ && pages_[currentPageIndex_])

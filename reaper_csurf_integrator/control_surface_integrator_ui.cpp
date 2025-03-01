@@ -165,7 +165,7 @@ struct FXCell
 
                 if (nameContext != NULL && paramContext != NULL)
                 {
-                    nameContext->SetAction(zoneManager->GetCSI()->GetFixedTextDisplayAction());
+                    nameContext->SetAction(zoneManager->GetCSI()->GetAction("FixedTextDisplay"));
                     nameContext->SetParamIndex(paramContext->GetParamIndex());
                     nameContext->SetStringParam(paramName);
                 }
@@ -186,7 +186,7 @@ struct FXCell
 
                 if (nameContext != NULL && paramContext != NULL)
                 {
-                    nameContext->SetAction(zoneManager->GetCSI()->GetFXParamValueDisplayAction());
+                    nameContext->SetAction(zoneManager->GetCSI()->GetAction("FXParamValueDisplay"));
                     nameContext->SetParamIndex(paramContext->GetParamIndex());
                     nameContext->SetStringParam("");
                 }
@@ -208,7 +208,7 @@ struct FXCell
             
             if (nameContext != NULL && nameContext->GetParamIndex() == paramContext->GetParamIndex() && ! strcmp (nameContext->GetAction()->GetName(), "FixedTextDisplay"))
             {
-                nameContext->SetAction(zoneManager->GetCSI()->GetNoActionAction());
+                nameContext->SetAction(zoneManager->GetCSI()->GetAction("NoAction"));
                 nameContext->SetParamIndex(0);
                 nameContext->SetStringParam("");
                 
@@ -229,7 +229,7 @@ struct FXCell
             
             if (valueContext != NULL && valueContext->GetParamIndex() == paramContext->GetParamIndex() && ! strcmp (valueContext->GetAction()->GetName(), "FXParamValueDisplay"))
             {
-                valueContext->SetAction(zoneManager->GetCSI()->GetNoActionAction());
+                valueContext->SetAction(zoneManager->GetCSI()->GetAction("NoAction"));
                 valueContext->SetParamIndex(0);
                 valueContext->SetStringParam("");
                 
@@ -1220,7 +1220,7 @@ static void HandleAssigment(SurfaceFXTemplate *t, Widget *widget, int modifier, 
     {
         if (ActionContext *nameContext = cell->GetNameContext(widget))
         {
-            nameContext->SetAction(zoneManager->GetCSI()->GetNoActionAction());
+            nameContext->SetAction(zoneManager->GetCSI()->GetAction("NoAction"));
             nameContext->SetParamIndex(0);
             nameContext->SetStringParam("");
             nameContext->GetWidgetProperties().delete_props();
@@ -1228,13 +1228,13 @@ static void HandleAssigment(SurfaceFXTemplate *t, Widget *widget, int modifier, 
 
         if (ActionContext *valueContext = cell->GetValueContext(widget))
         {
-            valueContext->SetAction(zoneManager->GetCSI()->GetNoActionAction());
+            valueContext->SetAction(zoneManager->GetCSI()->GetAction("NoAction"));
             valueContext->SetParamIndex(0);
             valueContext->SetStringParam("");
             valueContext->GetWidgetProperties().delete_props();
         }
         
-        paramContext->SetAction(zoneManager->GetCSI()->GetNoActionAction());
+        paramContext->SetAction(zoneManager->GetCSI()->GetAction("NoAction"));
         paramContext->SetParamIndex(0);
         paramContext->SetStringParam("");
         paramContext->GetWidgetProperties().delete_props();
@@ -2399,8 +2399,7 @@ void InitBlankLearnFocusedFXZone(ZoneManager *zoneManager, Zone *fxZone, MediaTr
                 if (Widget *widget = zoneManager->GetSurface()->GetWidgetByName(widgetName))
                 {
                     fxZone->AddWidget(widget);
-                    ActionContext *context = zoneManager->GetCSI()->GetActionContext("NoAction", widget, fxZone, blankParams);
-                    fxZone->AddActionContext(widget, modifier, context);
+                    fxZone->AddActionContext(widget, modifier, fxZone, "NoAction", blankParams);
                 }
             }
             
@@ -2410,8 +2409,7 @@ void InitBlankLearnFocusedFXZone(ZoneManager *zoneManager, Zone *fxZone, MediaTr
                 if (Widget *widget = zoneManager->GetSurface()->GetWidgetByName(widgetName))
                 {
                     fxZone->AddWidget(widget);
-                    ActionContext *context = zoneManager->GetCSI()->GetActionContext("NoAction", widget, fxZone, blankParams);
-                    fxZone->AddActionContext(widget, modifier, context);
+                    fxZone->AddActionContext(widget, modifier, fxZone, "NoAction", blankParams);
                 }
             }
         }

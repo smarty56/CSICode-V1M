@@ -2039,7 +2039,7 @@ void Zone::Activate()
     for (auto widget : widgets_)
     {
         if (!strcmp(widget->GetName(), "OnZoneActivation"))
-            for (auto actionContext :  GetActionContexts(widget))
+            for (auto &actionContext :  GetActionContexts(widget))
                 actionContext->DoAction(1.0);
             
         widget->Configure(GetActionContexts(widget));
@@ -2067,7 +2067,7 @@ void Zone::Deactivate()
 {    
     for (auto widget : widgets_)
     {
-        for (auto actionContext : GetActionContexts(widget))
+        for (auto &actionContext : GetActionContexts(widget))
         {
             actionContext->UpdateWidgetValue(0.0);
             actionContext->UpdateWidgetValue("");
@@ -2148,7 +2148,7 @@ void Zone::DoAction(Widget *widget, bool &isUsed, double value)
 
         isUsed = true;
         
-        for (auto actionContext : GetActionContexts(widget))
+        for (auto &actionContext : GetActionContexts(widget))
             actionContext->DoAction(value);
     }
     else
@@ -2180,7 +2180,7 @@ void Zone::DoRelativeAction(Widget *widget, bool &isUsed, double delta)
 
         isUsed = true;
 
-        for (auto actionContext : GetActionContexts(widget))
+        for (auto &actionContext : GetActionContexts(widget))
             actionContext->DoRelativeAction(delta);
     }
     else
@@ -2212,7 +2212,7 @@ void Zone::DoRelativeAction(Widget *widget, bool &isUsed, int accelerationIndex,
 
         isUsed = true;
 
-        for (auto actionContext : GetActionContexts(widget))
+        for (auto &actionContext : GetActionContexts(widget))
             actionContext->DoRelativeAction(accelerationIndex, delta);
     }
     else
@@ -2244,7 +2244,7 @@ void Zone::DoTouch(Widget *widget, const char *widgetName, bool &isUsed, double 
 
         isUsed = true;
 
-        for (auto actionContext : GetActionContexts(widget))
+        for (auto &actionContext : GetActionContexts(widget))
             actionContext->DoTouch(value);
     }
     else
@@ -2279,6 +2279,13 @@ void Zone::UpdateCurrentActionContextModifier(Widget *widget)
             break;
         }
     }
+}
+
+ActionContext *Zone::AddActionContext(Widget *widget, int modifier, Zone *zone, const char *actionName, vector<string> &params)
+{
+    actionContextDictionary_[widget][modifier].push_back(new ActionContext(csi_, csi_->GetAction(actionName), widget, zone, 0, params, NULL));
+        
+    return actionContextDictionary_[widget][modifier].back();
 }
 
 const vector<ActionContext *> &Zone::GetActionContexts(Widget *widget)
@@ -2480,8 +2487,8 @@ void ZoneManager::Initialize()
         return;
     }
             
-    homeZone_ = new Zone(csi_, this, GetSelectedTrackNavigator(), 0, "Home", "Home", zoneInfo_["Home"].filePath);
-    LoadZoneFile(homeZone_, "");
+    homeZone_ = make_unique<Zone>(csi_, this, GetSelectedTrackNavigator(), 0, "Home", "Home", zoneInfo_["Home"].filePath);
+    LoadZoneFile(homeZone_.get(), "");
     
     vector<string> zoneList;
     if (zoneInfo_.find("GoZones") != zoneInfo_.end())
@@ -2728,11 +2735,11 @@ void ZoneManager::LoadZoneFile(Zone *zone, const char *filePath, const char *wid
                 if (tokens[1] == "NullDisplay")
                     continue;
                 
-                ActionContext *context = csi_->GetActionContext(tokens[1].c_str(), widget, zone, memberParams);
-                
+                ActionContext *context = zone->AddActionContext(widget, modifier, zone, tokens[1].c_str(), memberParams);
+
                 if (isValueInverted)
-                    context->SetIsValueInverted();
-                
+                        context->SetIsValueInverted();
+                    
                 if (isFeedbackInverted)
                     context->SetIsFeedbackInverted();
                 
@@ -2753,8 +2760,6 @@ void ZoneManager::LoadZoneFile(Zone *zone, const char *filePath, const char *wid
                     range.push_back(2.0);
                     context->SetRange(range);
                 }
-                
-                zone->AddActionContext(widget, modifier, context);
             }
         }
     }
