@@ -297,7 +297,6 @@ class Midi_ControlSurface;
 class OSC_ControlSurface;
 class TrackNavigationManager;
 class FeedbackProcessor;
-class Zone;
 class ActionContext;
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1375,13 +1374,13 @@ public:
             }
         }
         
-        for (int i = 0; i < goZones_.size(); ++i)
-            if (strcmp(zoneName, goZones_[i]->GetName()))
-                goZones_[i]->Deactivate();
+        for (auto &goZone : goZones_)
+            if (strcmp(zoneName, goZone->GetName()))
+                goZone->Deactivate();
         
-        for (int i = 0; i < goZones_.size(); ++i)
-            if (!strcmp(zoneName, goZones_[i]->GetName()))
-               goZones_[i]->Activate();
+        for (auto &goZone : goZones_)
+            if (!strcmp(zoneName, goZone->GetName()))
+               goZone->Activate();
         
         if ( ! strcmp(zoneName, "SelectedTrackFX"))
             GoSelectedTrackFX();
@@ -1457,8 +1456,8 @@ public:
         ClearFXMapping();
         ResetOffsets();
 
-        for (int i = 0; i < goZones_.size(); ++i)
-            goZones_[i]->Deactivate();
+        for (auto &goZone : goZones_)
+            goZone->Deactivate();
         
         homeZone_->Activate();
     }
@@ -1484,14 +1483,14 @@ public:
         
         selectedTrackFXZones_.clear();
         
-        for (int i = 0; i < goZones_.size(); ++i)
+        for (auto &goZone : goZones_)
         {
-            if (!strcmp(goZones_[i]->GetName(), "SelectedTrack") ||
-                !strcmp(goZones_[i]->GetName(), "SelectedTrackSend") ||
-                !strcmp(goZones_[i]->GetName(), "SelectedTrackReceive") ||
-                !strcmp(goZones_[i]->GetName(), "SelectedTrackFXMenu"))
+            if (!strcmp(goZone->GetName(), "SelectedTrack") ||
+                !strcmp(goZone->GetName(), "SelectedTrackSend") ||
+                !strcmp(goZone->GetName(), "SelectedTrackReceive") ||
+                !strcmp(goZone->GetName(), "SelectedTrackFXMenu"))
             {
-                goZones_[i]->Deactivate();
+                goZone->Deactivate();
             }
         }
         
@@ -1528,17 +1527,17 @@ public:
     
     bool GetIsGoZoneActive(const char *zoneName)
     {
-        for (int i = 0; i < goZones_.size(); ++i)
-            if (!strcmp(zoneName, goZones_[i]->GetName()))
-                return goZones_[i]->GetIsActive();
+        for (auto &goZone : goZones_)
+            if (!strcmp(zoneName, goZone->GetName()))
+                return goZone->GetIsActive();
         
         return false;
     }
     
     bool GetIsHomeZoneOnlyActive()
     {
-        for (int i = 0; i < goZones_.size(); ++i)
-            if (goZones_[i]->GetIsActive())
+        for (auto &goZone : goZones_)
+            if (goZone->GetIsActive())
                 return false;
 
         return true;
@@ -4123,7 +4122,6 @@ public:
         {
             pages_[currentPageIndex_]->LeavePage();
             currentPageIndex_ = currentPageIndex_ == pages_.size() - 1 ? 0 : (currentPageIndex_ + 1);
-            //DAW::SetProjExtState(0, "CSI", "PageIndex", int_to_string(currentPageIndex_).c_str());
             if (pages_[currentPageIndex_])
                 pages_[currentPageIndex_]->EnterPage();
         }
@@ -4141,10 +4139,7 @@ public:
                 currentPageIndex_ = i;
                 
                 if (pages_.size() > currentPageIndex_ && pages_[currentPageIndex_])
-                {
-                    //DAW::SetProjExtState(0, "CSI", "PageIndex", int_to_string(currentPageIndex_).c_str());
                     pages_[currentPageIndex_]->EnterPage();
-                }
                 break;
             }
         }
@@ -4204,7 +4199,7 @@ public:
                 
                 if (fxFile)
                 {
-                    fprintf(fxFile,"ZoneEnd"); // do we want a newline on this? probably
+                    fprintf(fxFile,"ZoneEnd");
                     fclose(fxFile);
                 }
             }

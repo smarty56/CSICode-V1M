@@ -2031,7 +2031,7 @@ void Zone::Activate()
 {
     UpdateCurrentActionContextModifiers();
     
-    for (auto widget : widgets_)
+    for (auto &widget : widgets_)
     {
         if (!strcmp(widget->GetName(), "OnZoneActivation"))
             for (auto &actionContext :  GetActionContexts(widget))
@@ -2060,7 +2060,7 @@ void Zone::Activate()
 
 void Zone::Deactivate()
 {    
-    for (auto widget : widgets_)
+    for (auto &widget : widgets_)
     {
         for (auto &actionContext : GetActionContexts(widget))
         {
@@ -2111,13 +2111,13 @@ void Zone::RequestUpdate()
 
 void Zone::SetXTouchDisplayColors(const char *colors)
 {
-    for (auto widget : widgets_)
+    for (auto &widget : widgets_)
        widget->SetXTouchDisplayColors(colors);
 }
 
 void Zone::RestoreXTouchDisplayColors()
 {
-    for (auto widget : widgets_)
+    for (auto &widget : widgets_)
         widget->RestoreXTouchDisplayColors();
 }
 
@@ -2251,7 +2251,7 @@ void Zone::DoTouch(Widget *widget, const char *widgetName, bool &isUsed, double 
 
 void Zone::UpdateCurrentActionContextModifiers()
 {
-    for (auto widget : widgets_)
+    for (auto &widget : widgets_)
     {
         UpdateCurrentActionContextModifier(widget);
         widget->Configure(GetActionContexts(widget, currentActionContextModifiers_[widget]));
@@ -3390,7 +3390,7 @@ void ControlSurface::RequestUpdate()
 
     const PropertyList properties;
     
-    for (auto widget : widgets_)
+    for (auto &widget : widgets_)
     {
         if ( ! widget->GetHasBeenUsedByUpdate())
         {

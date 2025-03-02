@@ -561,8 +561,7 @@ static void LoadTemplates(SurfaceFXTemplate *fxTemplate)
                         if (tokens[0] == "#WidgetType" && tokens.size() > 1)
                         {
                             fxTemplate->paramWidgets.push_back(tokens[1]);
-                            
-
+ 
                             if (tokens.size() > 2)
                                 fxTemplate->paramWidgetParams.push_back(line.substr(line.find(tokens[2]), line.length() - 1).c_str());
                         }
@@ -3730,10 +3729,6 @@ WDL_DLGRET dlgProcMainConfig(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lPar
                             {
                                 SurfaceLine *surface = new SurfaceLine(surfaceTypeProp, surfaceNameProp, atoi(surfaceChannelCountProp));
                                 
-                                surface->type = surfaceTypeProp;
-                                surface->name = surfaceNameProp;
-                                surface->channelCount = atoi(surfaceChannelCountProp);
-                                
                                 if ( ! strcmp(surfaceTypeProp, s_MidiSurfaceToken) && tokens.size() == 7)
                                 {
                                     if (pList.get_prop(PropertyType_MidiInput) != NULL &&
@@ -3741,16 +3736,9 @@ WDL_DLGRET dlgProcMainConfig(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lPar
                                         pList.get_prop(PropertyType_MIDISurfaceRefreshRate) != NULL &&
                                         pList.get_prop(PropertyType_MaxMIDIMesssagesPerRun) != NULL)
                                     {
-                                        surface->inPort = atoi(pList.get_prop(PropertyType_MidiInput));
-                                        surface->outPort = atoi(pList.get_prop(PropertyType_MidiOutput));
-                                        surface->surfaceRefreshRate = atoi(pList.get_prop(PropertyType_MIDISurfaceRefreshRate));
-                                        surface->surfaceMaxSysExMessagesPerRun = atoi(pList.get_prop(PropertyType_MaxMIDIMesssagesPerRun));
-
-                                        {
-                                            s_surfaces.push_back(make_unique<SurfaceLine>(surfaceTypeProp, surfaceNameProp, atoi(surfaceChannelCountProp),                                                                       atoi(pList.get_prop(PropertyType_MidiInput)), atoi(pList.get_prop(PropertyType_MidiOutput)), s_surfaceRefreshRate, atoi(pList.get_prop(PropertyType_MaxMIDIMesssagesPerRun))));
-                                            
-                                            AddListEntry(hwndDlg, surface->name, IDC_LIST_Surfaces);
-                                        }
+                                         s_surfaces.push_back(make_unique<SurfaceLine>(surfaceTypeProp, surfaceNameProp, atoi(surfaceChannelCountProp),                                                                       atoi(pList.get_prop(PropertyType_MidiInput)), atoi(pList.get_prop(PropertyType_MidiOutput)), s_surfaceRefreshRate, atoi(pList.get_prop(PropertyType_MaxMIDIMesssagesPerRun))));
+                                        
+                                        AddListEntry(hwndDlg, surface->name, IDC_LIST_Surfaces);
                                     }
                                 }
                                 else if (( ! strcmp(surfaceTypeProp, s_OSCSurfaceToken) || ! strcmp(surfaceTypeProp, s_OSCX32SurfaceToken)) && tokens.size() == 7)
@@ -3761,7 +3749,6 @@ WDL_DLGRET dlgProcMainConfig(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lPar
                                         pList.get_prop(PropertyType_MaxPacketsPerRun) != NULL)
                                     {
                                         s_surfaces.push_back(make_unique<SurfaceLine>(surfaceTypeProp, surfaceNameProp, atoi(surfaceChannelCountProp),                                                                       atoi(pList.get_prop(PropertyType_ReceiveOnPort)), atoi(pList.get_prop(PropertyType_TransmitToPort)), s_surfaceRefreshRate, atoi(pList.get_prop(PropertyType_MaxPacketsPerRun)), pList.get_prop(PropertyType_TransmitToIPAddress)));
-
                                         
                                         AddListEntry(hwndDlg, surface->name, IDC_LIST_Surfaces);
                                     }
