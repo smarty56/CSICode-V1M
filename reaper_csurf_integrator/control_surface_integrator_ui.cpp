@@ -51,10 +51,10 @@ static ActionContext *GetFirstContext(ZoneManager *zoneManager, Widget *widget, 
     if (widget == NULL)
         return NULL;
     
-    const vector<ActionContext *> &actionContexts = zoneManager->GetLearnFocusedFXActionContexts(widget, modifier);
+    const vector<unique_ptr<ActionContext>> &actionContexts = zoneManager->GetLearnFocusedFXActionContexts(widget, modifier);
     
     if (actionContexts.size() > 0)
-        return actionContexts[0];
+        return actionContexts[0].get();
     else
         return NULL;
 }

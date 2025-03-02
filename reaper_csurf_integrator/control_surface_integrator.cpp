@@ -2275,14 +2275,12 @@ void Zone::UpdateCurrentActionContextModifier(Widget *widget)
 
 ActionContext *Zone::AddActionContext(Widget *widget, int modifier, Zone *zone, const char *actionName, vector<string> &params)
 {
-    //unique_ptr<ActionContext> *p = make_unique<ActionContext>(csi_, csi_->GetAction(actionName), widget, zone, 0, params);
+    actionContextDictionary_[widget][modifier].push_back(make_unique<ActionContext>(csi_, csi_->GetAction(actionName), widget, zone, 0, params));
     
-    actionContextDictionary_[widget][modifier].push_back(new ActionContext(csi_, csi_->GetAction(actionName), widget, zone, 0, params));
-        
-    return actionContextDictionary_[widget][modifier].back();
+    return actionContextDictionary_[widget][modifier].back().get();
 }
 
-const vector<ActionContext *> &Zone::GetActionContexts(Widget *widget)
+const vector<unique_ptr<ActionContext>> &Zone::GetActionContexts(Widget *widget)
 {
     if(currentActionContextModifiers_.count(widget) == 0)
         UpdateCurrentActionContextModifier(widget);
@@ -2321,7 +2319,7 @@ ZoneManager *Widget::GetZoneManager()
     return surface_->GetZoneManager();
 }
 
-void Widget::Configure(const vector<ActionContext *> &contexts)
+void Widget::Configure(const vector<unique_ptr<ActionContext>> &contexts)
 {
     for (auto &feedbackProcessor : feedbackProcessors_)
         feedbackProcessor->Configure(contexts);

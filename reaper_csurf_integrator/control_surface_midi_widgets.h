@@ -832,7 +832,7 @@ public:
         return val + 64;
     }
         
-    virtual void Configure(const vector<ActionContext *> &contexts) override
+    virtual void Configure(const vector<unique_ptr<ActionContext>> &contexts) override
     {
         if (contexts.size() == 0)
             return;

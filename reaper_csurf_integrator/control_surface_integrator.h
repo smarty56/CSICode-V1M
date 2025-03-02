@@ -693,9 +693,9 @@ protected:
     // these do not own the widgets, ultimately the ControlSurface contains the list of widgets
     vector<Widget *> widgets_;
       
-    vector<ActionContext *> emptyContexts_;
+    vector<unique_ptr<ActionContext>> emptyContexts_;
     map<Widget *, int> currentActionContextModifiers_;
-    map<Widget *, map<int, vector<ActionContext *>>> actionContextDictionary_;
+    map<Widget *, map<int, vector<unique_ptr<ActionContext>>>> actionContextDictionary_;
 
     vector<unique_ptr<Zone>> includedZones_;
     vector<unique_ptr<Zone>> subZones_;
@@ -718,7 +718,7 @@ public:
     void RestoreXTouchDisplayColors();
     void UpdateCurrentActionContextModifiers();
     
-    const vector<ActionContext *> &GetActionContexts(Widget *widget);
+    const vector<unique_ptr<ActionContext>> &GetActionContexts(Widget *widget);
     ActionContext *AddActionContext(Widget *widget, int modifier, Zone *zone, const char *actionName, vector<string> &params);
 
     void AddWidget(Widget *widget);
@@ -760,7 +760,7 @@ public:
             return name_.c_str();
     }
             
-    const vector<ActionContext *> &GetActionContexts(Widget *widget, int modifier)
+    const vector<unique_ptr<ActionContext>> &GetActionContexts(Widget *widget, int modifier)
     {
         if(actionContextDictionary_.count(widget) > 0 && actionContextDictionary_[widget].count(modifier) > 0)
             return actionContextDictionary_[widget][modifier];
@@ -884,7 +884,7 @@ public:
     void SetLastIncomingDelta(double delta) { lastIncomingDelta_ = delta; }
     double GetLastIncomingDelta() { return lastIncomingDelta_; }
 
-    void Configure(const vector<ActionContext *> &contexts);
+    void Configure(const vector<unique_ptr<ActionContext>> &contexts);
     void UpdateValue(const PropertyList &properties, double value);
     void UpdateValue(const PropertyList &properties, const char * const &value);
     void ForceValue(const PropertyList &properties, const char * const &value);
@@ -920,7 +920,7 @@ private:
     string const zoneFolder_;
     string const fxZoneFolder_;
    
-    vector<ActionContext *> emptyContexts_;
+    vector<unique_ptr<ActionContext>> emptyContexts_;
     
     map<const string, CSIZoneInfo> zoneInfo_;
         
@@ -1241,7 +1241,7 @@ public:
     
     Zone *GetLearnedFocusedFXZone() { return  learnFocusedFXZone_;  }
     
-    const vector<ActionContext *> &GetLearnFocusedFXActionContexts(Widget *widget, int modifier)
+    const vector<unique_ptr<ActionContext>> &GetLearnFocusedFXActionContexts(Widget *widget, int modifier)
     {
         if (learnFocusedFXZone_ != NULL)
             return learnFocusedFXZone_->GetActionContexts(widget, modifier);
@@ -2406,7 +2406,7 @@ public:
     virtual ~FeedbackProcessor() {}
     virtual const char *GetName()  { return "FeedbackProcessor"; }
     Widget *GetWidget() { return widget_; }
-    virtual void Configure(const vector<ActionContext *> &contexts) {}
+    virtual void Configure(const vector<unique_ptr<ActionContext>> &contexts) {}
     virtual void ForceValue(const PropertyList &properties, double value) {}
     virtual void ForceValue(const PropertyList &properties, const char * const &value) {}
     virtual void ForceColorValue(const rgba_color &color) {}
