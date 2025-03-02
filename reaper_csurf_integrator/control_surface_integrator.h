@@ -496,7 +496,7 @@ private:
     void SetColor(const vector<string> &params, bool &supportsColor, bool &supportsTrackColor, vector<rgba_color> &colorValues);
     void GetColorValues(vector<rgba_color> &colorValues, const vector<string> &colors);
 public:
-    ActionContext(CSurfIntegrator *const csi, Action *action, Widget *widget, Zone *zone, int paramIndex, const vector<string> &params, const string *stringParam);
+    ActionContext(CSurfIntegrator *const csi, Action *action, Widget *widget, Zone *zone, int paramIndex, const vector<string> &params);
 
     virtual ~ActionContext() {}
     
@@ -2016,7 +2016,7 @@ protected:
 
     bool speedX5_ = false;
 
-    ControlSurface(CSurfIntegrator *const csi, Page *page, const string &name, int numChannels, int channelOffset) : csi_(csi), page_(page), name_(name), numChannels_(numChannels), channelOffset_(channelOffset), modifierManager_(new ModifierManager(csi_, NULL, this))
+    ControlSurface(CSurfIntegrator *const csi, Page *page, const string &name, int numChannels, int channelOffset) : csi_(csi), page_(page), name_(name), numChannels_(numChannels), channelOffset_(channelOffset), modifierManager_(make_unique<ModifierManager>(csi_, (Page *)NULL, this))
     {
         int size = 0;
         scrubModePtr_ = (int*)get_config_var("scrubmode", &size);
@@ -3664,7 +3664,7 @@ protected:
     vector<unique_ptr<ControlSurface>> surfaces_;
     
 public:
-    Page(CSurfIntegrator *const csi, const char *name, bool followMCP,  bool synchPages, bool isScrollLinkEnabled, bool isScrollSynchEnabled) : csi_(csi), name_(name), trackNavigationManager_(make_unique<TrackNavigationManager>(csi_, this, followMCP, synchPages, isScrollLinkEnabled, isScrollSynchEnabled)), modifierManager_(new ModifierManager(csi_, this, NULL)) {}
+    Page(CSurfIntegrator *const csi, const char *name, bool followMCP,  bool synchPages, bool isScrollLinkEnabled, bool isScrollSynchEnabled) : csi_(csi), name_(name), trackNavigationManager_(make_unique<TrackNavigationManager>(csi_, this, followMCP, synchPages, isScrollLinkEnabled, isScrollSynchEnabled)), modifierManager_(make_unique<ModifierManager>(csi_, this, (ControlSurface *)NULL)) {}
 
     ~Page()
     {

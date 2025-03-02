@@ -1500,11 +1500,8 @@ MediaTrack *FocusedFXNavigator::GetTrack()
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // ActionContext
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-ActionContext::ActionContext(CSurfIntegrator *const csi, Action *action, Widget *widget, Zone *zone, int paramIndex, const vector<string> &paramsAndProperties, const string *stringParam): csi_(csi), action_(action), widget_(widget), zone_(zone), paramIndex_(paramIndex)
+ActionContext::ActionContext(CSurfIntegrator *const csi, Action *action, Widget *widget, Zone *zone, int paramIndex, const vector<string> &paramsAndProperties) : csi_(csi), action_(action), widget_(widget), zone_(zone), paramIndex_(paramIndex)
 {
-    if (stringParam != NULL)
-        stringParam_ = *stringParam;
-
     vector<string> params_wr;
     const vector<string> &params = params_wr;
     
@@ -2278,7 +2275,7 @@ void Zone::UpdateCurrentActionContextModifier(Widget *widget)
 
 ActionContext *Zone::AddActionContext(Widget *widget, int modifier, Zone *zone, const char *actionName, vector<string> &params)
 {
-    actionContextDictionary_[widget][modifier].push_back(new ActionContext(csi_, csi_->GetAction(actionName), widget, zone, 0, params, NULL));
+    actionContextDictionary_[widget][modifier].push_back(new ActionContext(csi_, csi_->GetAction(actionName), widget, zone, 0, params));
         
     return actionContextDictionary_[widget][modifier].back();
 }
