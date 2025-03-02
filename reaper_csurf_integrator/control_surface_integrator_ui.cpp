@@ -2495,83 +2495,59 @@ struct PageSurfaceLine
 struct Listener
 {
     string name;
-    bool goHome;
-    bool sends;
-    bool receives;
-    bool fxMenu;
-    bool selectedTrackFX;
-    bool modifiers;
+    bool goHome = false;
+    bool sends = false;
+    bool receives = false;
+    bool fxMenu = false;
+    bool selectedTrackFX = false;
+    bool modifiers = false;
     
-    Listener()
-    {
-        goHome = false;
-        sends = false;
-        receives = false;
-        fxMenu = false;
-        selectedTrackFX = false;
-        modifiers = false;
-    }
+    Listener(string aName, bool aGoHome, bool aSends, bool aReceives, bool anFXMenu, bool aSelectedTrackFX, bool aModifiers) : name(aName), goHome(aGoHome), sends(aSends), receives(aReceives), fxMenu(anFXMenu), selectedTrackFX(aSelectedTrackFX), modifiers(aModifiers)  {}
+    
+    Listener(string aName) : name(aName) {}
 };
 
 struct Broadcaster
 {
     string name;
-    vector<Listener *> listeners;
+    vector<unique_ptr<Listener>> listeners;
 };
 
 struct PageLine
 {
     string name;
-    bool followMCP;
-    bool synchPages;
-    bool isScrollLinkEnabled;
-    bool isScrollSynchEnabled;
-    vector<PageSurfaceLine *> surfaces;
-    vector<Broadcaster *> broadcasters;
+    bool followMCP = true;
+    bool synchPages = true;
+    bool isScrollLinkEnabled = false;
+    bool isScrollSynchEnabled = false;
+    vector<unique_ptr<PageSurfaceLine>> surfaces;
+    vector<unique_ptr<Broadcaster>> broadcasters;
     
-    PageLine()
-    {
-        followMCP = true;
-        synchPages = true;
-        isScrollLinkEnabled = false;
-        isScrollSynchEnabled = false;
-    }
+    PageLine() {}
 };
 
 // Scratch pad to get in and out of dialogs easily
-static vector<Broadcaster *> s_broadcasters;
+static vector<unique_ptr<Broadcaster>> s_broadcasters;
 
-static void TransferBroadcasters(vector<Broadcaster *> &source, vector<Broadcaster *> &destination)
+static void TransferBroadcasters(vector<unique_ptr<Broadcaster>> &source, vector<unique_ptr<Broadcaster>> &destination)
 {
     destination.clear();
     
     for (int i = 0; i < source.size(); ++i)
     {
-        Broadcaster *destinationBroadcaster = new Broadcaster();
+        destination.push_back(make_unique<Broadcaster>());
+
+        Broadcaster *destinationBroadcaster = destination.back().get();
         
         destinationBroadcaster->name = source[i]->name;
         
-        for (auto listener : source[i]->listeners)
-        {
-            Listener *destinationListener = new Listener();
-            
-            destinationListener->name = listener->name;
-            
-            destinationListener->goHome = listener->goHome;
-            destinationListener->sends = listener->sends;
-            destinationListener->receives = listener->receives;
-            destinationListener->fxMenu = listener->fxMenu;
-            destinationListener->modifiers = listener->modifiers;
-            destinationListener->selectedTrackFX = listener->selectedTrackFX;
-            
-            destinationBroadcaster->listeners.push_back(destinationListener);
-        }
-        
-        destination.push_back(destinationBroadcaster);
+        for (auto &listener : source[i]->listeners)
+            destinationBroadcaster->listeners.push_back(make_unique<Listener>(listener->name, listener->goHome,listener->sends, listener->receives,
+                                                                              listener->fxMenu, listener->selectedTrackFX, listener->modifiers));
     }
 }
 
-static vector<PageLine *> s_pages;
+static vector<unique_ptr<PageLine>> s_pages;
 
 static void AddComboEntry(HWND hwndDlg, int x, char  *buf, int comboId)
 {
@@ -3010,7 +2986,7 @@ static WDL_DLGRET dlgProcAdvancedSetup(HWND hwndDlg, UINT uMsg, WPARAM wParam, L
             
             if (s_broadcasters.size() > 0)
             {
-                for (auto broadcaster: s_broadcasters)
+                for (auto &broadcaster: s_broadcasters)
                     AddListEntry(hwndDlg, broadcaster->name, IDC_LIST_Broadcasters);
                     
                 SendMessage(GetDlgItem(hwndDlg, IDC_LIST_Broadcasters), LB_SETCURSEL, 0, 0);
@@ -3034,14 +3010,14 @@ static WDL_DLGRET dlgProcAdvancedSetup(HWND hwndDlg, UINT uMsg, WPARAM wParam, L
                         {
                             SendMessage(GetDlgItem(hwndDlg, IDC_LIST_Listeners), LB_RESETCONTENT, 0, 0);
                            
-                            for (auto listener : s_broadcasters[broadcasterIndex]->listeners)
+                            for (auto &listener : s_broadcasters[broadcasterIndex]->listeners)
                                 AddListEntry(hwndDlg, listener->name, IDC_LIST_Listeners);
                             
                             if (s_broadcasters.size() > 0)
                                 SendMessage(GetDlgItem(hwndDlg, IDC_LIST_Listeners), LB_SETCURSEL, 0, 0);
                             
                             if (broadcasterIndex >= 0 && s_broadcasters[broadcasterIndex]->listeners.size() > 0)
-                                SetCheckBoxes(hwndDlg, s_broadcasters[broadcasterIndex]->listeners[0]);
+                                SetCheckBoxes(hwndDlg, s_broadcasters[broadcasterIndex]->listeners[0].get());
                             else
                                 ClearCheckBoxes(hwndDlg);
                         }
@@ -3059,7 +3035,7 @@ static WDL_DLGRET dlgProcAdvancedSetup(HWND hwndDlg, UINT uMsg, WPARAM wParam, L
                         int listenerIndex = (int)SendDlgItemMessage(hwndDlg, IDC_LIST_Listeners, LB_GETCURSEL, 0, 0);
                         
                         if (broadcasterIndex >= 0 && listenerIndex >= 0)
-                            SetCheckBoxes(hwndDlg, s_broadcasters[broadcasterIndex]->listeners[listenerIndex]);
+                            SetCheckBoxes(hwndDlg, s_broadcasters[broadcasterIndex]->listeners[listenerIndex].get());
                     }
                     break;
 
@@ -3073,14 +3049,13 @@ static WDL_DLGRET dlgProcAdvancedSetup(HWND hwndDlg, UINT uMsg, WPARAM wParam, L
                             GetDlgItemText(hwndDlg, IDC_AddBroadcaster, broadcasterName, sizeof(broadcasterName));
                             
                             bool foundit = false;
-                            for (auto broadcaster :s_broadcasters)
+                            for (auto &broadcaster :s_broadcasters)
                                 if (broadcasterName == broadcaster->name)
                                     foundit = true;
                             if (! foundit)
                             {
-                                Broadcaster *broadcaster = new Broadcaster();
-                                broadcaster->name = broadcasterName;
-                                s_broadcasters.push_back(broadcaster);
+                                s_broadcasters.push_back(make_unique<Broadcaster>());
+                                s_broadcasters.back().get()->name = broadcasterName;
                                 AddListEntry(hwndDlg, broadcasterName, IDC_LIST_Broadcasters);
                                 SendMessage(GetDlgItem(hwndDlg, IDC_LIST_Broadcasters), LB_SETCURSEL, s_broadcasters.size() - 1, 0);
                                 ClearCheckBoxes(hwndDlg);
@@ -3101,14 +3076,12 @@ static WDL_DLGRET dlgProcAdvancedSetup(HWND hwndDlg, UINT uMsg, WPARAM wParam, L
                             GetDlgItemText(hwndDlg, IDC_AddListener, listenerName, sizeof(listenerName));
                             
                             bool foundit = false;
-                            for (auto listener : s_broadcasters[broadcasterIndex]->listeners)
+                            for (auto &listener : s_broadcasters[broadcasterIndex]->listeners)
                                 if (listenerName == listener->name)
                                     foundit = true;
                             if (! foundit)
                             {
-                                Listener *listener = new Listener();
-                                listener->name = listenerName;
-                                 s_broadcasters[broadcasterIndex]->listeners.push_back(listener);
+                                s_broadcasters[broadcasterIndex]->listeners.push_back(make_unique<Listener>(listenerName));
                                 AddListEntry(hwndDlg, listenerName, IDC_LIST_Listeners);
                                 SendMessage(GetDlgItem(hwndDlg, IDC_LIST_Listeners), LB_SETCURSEL,  s_broadcasters[broadcasterIndex]->listeners.size() - 1, 0);
                                 ClearCheckBoxes(hwndDlg);
@@ -3232,7 +3205,7 @@ static WDL_DLGRET dlgProcAdvancedSetup(HWND hwndDlg, UINT uMsg, WPARAM wParam, L
 
                             if (s_broadcasters.size() > 0)
                             {
-                                for (auto broadcaster : s_broadcasters)
+                                for (auto &broadcaster : s_broadcasters)
                                     AddListEntry(hwndDlg, broadcaster->name, IDC_LIST_Broadcasters);
                                     
                                 SendMessage(GetDlgItem(hwndDlg, IDC_LIST_Broadcasters), LB_SETCURSEL, s_broadcasters.size() - 1, 0);
@@ -3254,7 +3227,7 @@ static WDL_DLGRET dlgProcAdvancedSetup(HWND hwndDlg, UINT uMsg, WPARAM wParam, L
                             ClearCheckBoxes(hwndDlg);
                             if (s_broadcasters[broadcasterIndex]->listeners.size() > 0)
                             {
-                                for (auto listener : s_broadcasters[broadcasterIndex]->listeners)
+                                for (auto &listener : s_broadcasters[broadcasterIndex]->listeners)
                                     AddListEntry(hwndDlg, listener->name, IDC_LIST_Listeners);
                                     
                                 SendMessage(GetDlgItem(hwndDlg, IDC_LIST_Listeners), LB_SETCURSEL, s_broadcasters[broadcasterIndex]->listeners.size() - 1, 0);
@@ -3322,7 +3295,7 @@ WDL_DLGRET dlgProcMainConfig(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lPar
 
                                 s_pageIndex = index;
                                
-                                for (auto surface : s_pages[s_pageIndex]->surfaces)
+                                for (auto &surface : s_pages[s_pageIndex]->surfaces)
                                     AddListEntry(hwndDlg, surface->pageSurface, IDC_LIST_PageSurfaces);
                                 
                                 if (s_pages[index]->surfaces.size() > 0)
@@ -3396,14 +3369,16 @@ WDL_DLGRET dlgProcMainConfig(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lPar
                             DialogBox(g_hInst, MAKEINTRESOURCE(IDD_DIALOG_Page), hwndDlg, dlgProcPage);
                             if (s_dlgResult == IDOK)
                             {
-                                PageLine *page = new PageLine();
+                                s_pages.push_back(make_unique<PageLine>());
+
+                                PageLine *page = s_pages.back().get();
+                                
                                 page->name = s_pageName;
                                 page->followMCP = s_followMCP;
                                 page->synchPages = s_synchPages;
                                 page->isScrollLinkEnabled = s_isScrollLinkEnabled;
                                 page->isScrollSynchEnabled = s_scrollSynch;
 
-                                s_pages.push_back(page);
                                 AddListEntry(hwndDlg, s_pageName.c_str(), IDC_LIST_Pages);
                                 SendMessage(GetDlgItem(hwndDlg, IDC_LIST_Pages), LB_SETCURSEL, s_pages.size() - 1, 0);
                             }
@@ -3419,18 +3394,18 @@ WDL_DLGRET dlgProcMainConfig(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lPar
                             DialogBox(g_hInst, MAKEINTRESOURCE(IDD_DIALOG_PageSurface), hwndDlg, dlgProcPageSurface);
                             if (s_dlgResult == IDOK)
                             {
-                                PageSurfaceLine *pageSurface = new PageSurfaceLine();
-
-                                pageSurface->pageSurface = s_pageSurface;
-                                pageSurface->pageSurfaceFolder = s_pageSurfaceFolder;
-                                pageSurface->pageSurfaceZoneFolder = s_pageSurfaceZoneFolder;
-                                pageSurface->pageSurfaceFXZoneFolder = s_pageSurfaceFXZoneFolder;
-                                pageSurface->channelOffset = s_channelOffset;
-
                                 int index = (int)SendDlgItemMessage(hwndDlg, IDC_LIST_Pages, LB_GETCURSEL, 0, 0);
                                 if (index >= 0)
                                 {
-                                    s_pages[index]->surfaces.push_back(pageSurface);
+                                    s_pages[index]->surfaces.push_back(make_unique<PageSurfaceLine>());
+                                    PageSurfaceLine *pageSurface = s_pages[index]->surfaces.back().get();
+
+                                    pageSurface->pageSurface = s_pageSurface;
+                                    pageSurface->pageSurfaceFolder = s_pageSurfaceFolder;
+                                    pageSurface->pageSurfaceZoneFolder = s_pageSurfaceZoneFolder;
+                                    pageSurface->pageSurfaceFXZoneFolder = s_pageSurfaceFXZoneFolder;
+                                    pageSurface->channelOffset = s_channelOffset;
+
                                     AddListEntry(hwndDlg, s_pageSurface, IDC_LIST_PageSurfaces);
                                     SendMessage(GetDlgItem(hwndDlg, IDC_LIST_PageSurfaces), LB_SETCURSEL, s_pages[index]->surfaces.size() - 1, 0);
                                 }
@@ -3481,9 +3456,9 @@ WDL_DLGRET dlgProcMainConfig(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lPar
                                     
                                     if (s_oldSurfaceName != s_surfaceName)
                                     {
-                                        for (auto page : s_pages)
+                                        for (auto &page : s_pages)
                                         {
-                                            for (auto surface : page->surfaces)
+                                            for (auto &surface : page->surfaces)
                                             {
                                                 if (surface->surface == s_oldSurfaceName)
                                                     surface->surface = s_surfaceName;
@@ -3492,12 +3467,12 @@ WDL_DLGRET dlgProcMainConfig(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lPar
                                                     surface->pageSurface = s_surfaceName;
                                             }
                                             
-                                            for (auto broadcaster : page->broadcasters)
+                                            for (auto &broadcaster : page->broadcasters)
                                             {
                                                 if (broadcaster->name == s_oldSurfaceName)
                                                     broadcaster->name = s_surfaceName;
 
-                                                for (auto listener : broadcaster->listeners)
+                                                for (auto &listener : broadcaster->listeners)
                                                     if (listener->name == s_oldSurfaceName)
                                                         listener->name = s_surfaceName;
                                             }
@@ -3506,7 +3481,7 @@ WDL_DLGRET dlgProcMainConfig(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lPar
                                             {
                                                 SendMessage(GetDlgItem(hwndDlg, IDC_LIST_PageSurfaces), LB_RESETCONTENT, 0, 0);
 
-                                                for (auto surface : s_pages[s_pageIndex]->surfaces)
+                                                for (auto &surface : s_pages[s_pageIndex]->surfaces)
                                                     AddListEntry(hwndDlg, surface->pageSurface, IDC_LIST_PageSurfaces);
                                                 
                                                 SendMessage(GetDlgItem(hwndDlg, IDC_LIST_PageSurfaces), LB_SETCURSEL, index, 0);
@@ -3546,7 +3521,7 @@ WDL_DLGRET dlgProcMainConfig(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lPar
                                     s_pages[index]->isScrollSynchEnabled = s_scrollSynch;
 
                                     SendMessage(GetDlgItem(hwndDlg, IDC_LIST_Pages), LB_RESETCONTENT, 0, 0);
-                                    for (auto page : s_pages)
+                                    for (auto &page : s_pages)
                                         AddListEntry(hwndDlg, page->name, IDC_LIST_Pages);
                                     SendMessage(GetDlgItem(hwndDlg, IDC_LIST_Pages), LB_SETCURSEL, index, 0);
                                 }
@@ -3594,7 +3569,7 @@ WDL_DLGRET dlgProcMainConfig(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lPar
                                         s_pages[pageIndex]->surfaces[index]->pageSurface = s_pageSurface;
                                         SendMessage(GetDlgItem(hwndDlg, IDC_LIST_PageSurfaces), LB_RESETCONTENT, 0, 0);
 
-                                        for (auto surface : s_pages[pageIndex]->surfaces)
+                                        for (auto &surface : s_pages[pageIndex]->surfaces)
                                             AddListEntry(hwndDlg, surface->pageSurface, IDC_LIST_PageSurfaces);
                                         
                                         SendMessage(GetDlgItem(hwndDlg, IDC_LIST_PageSurfaces), LB_SETCURSEL, index, 0);
@@ -3646,7 +3621,7 @@ WDL_DLGRET dlgProcMainConfig(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lPar
                                     
                                     SendMessage(GetDlgItem(hwndDlg, IDC_LIST_PageSurfaces), LB_RESETCONTENT, 0, 0);
 
-                                    for (auto surface : s_pages[s_pageIndex]->surfaces)
+                                    for (auto &surface : s_pages[s_pageIndex]->surfaces)
                                         AddListEntry(hwndDlg, surface->pageSurface, IDC_LIST_PageSurfaces);
                                     
                                     SendMessage(GetDlgItem(hwndDlg, IDC_LIST_PageSurfaces), LB_SETCURSEL, index, 0);
@@ -3667,7 +3642,7 @@ WDL_DLGRET dlgProcMainConfig(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lPar
 #ifdef WIN32
                                 SendMessage(GetDlgItem(hwndDlg, IDC_LIST_PageSurfaces), LB_RESETCONTENT, 0, 0);
 #endif
-                                for (auto page : s_pages)
+                                for (auto &page : s_pages)
                                     AddListEntry(hwndDlg, page->name, IDC_LIST_Pages);
                                 SendMessage(GetDlgItem(hwndDlg, IDC_LIST_Pages), LB_SETCURSEL, index, 0);
                             }
@@ -3687,7 +3662,7 @@ WDL_DLGRET dlgProcMainConfig(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lPar
                                     
                                     SendMessage(GetDlgItem(hwndDlg, IDC_LIST_PageSurfaces), LB_RESETCONTENT, 0, 0);
 
-                                    for (auto surface : s_pages[pageIndex]->surfaces)
+                                    for (auto &surface : s_pages[pageIndex]->surfaces)
                                         AddListEntry(hwndDlg, surface->pageSurface, IDC_LIST_PageSurfaces);
                                     SendMessage(GetDlgItem(hwndDlg, IDC_LIST_PageSurfaces), LB_SETCURSEL, index, 0);
                                 }
@@ -3826,14 +3801,15 @@ WDL_DLGRET dlgProcMainConfig(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lPar
                                 isScrollSynchEnabled = true;
                         }
 
-                        PageLine *page = new PageLine();
+                        s_pages.push_back(make_unique<PageLine>());
+
+                        PageLine *page = s_pages.back().get();
+                        
                         page->name = pageNameProp;
                         page->followMCP = followMCP;
                         page->synchPages = synchPages;
                         page->isScrollLinkEnabled = isScrollLinkEnabled;
                         page->isScrollSynchEnabled = isScrollSynchEnabled;
- 
-                        s_pages.push_back(page);
                         
                         AddListEntry(hwndDlg, page->name, IDC_LIST_Pages);
                     }
@@ -3841,17 +3817,17 @@ WDL_DLGRET dlgProcMainConfig(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lPar
                     {
                         if (s_pages.size() > 0)
                         {
-                            Broadcaster *broadcaster = new Broadcaster();
-                            broadcaster->name = broadcasterNameProp;
-                            s_pages[s_pages.size() - 1]->broadcasters.push_back(broadcaster);
+                            s_pages[s_pages.size() - 1]->broadcasters.push_back(make_unique<Broadcaster>());
+                            s_pages[s_pages.size() - 1]->broadcasters.back().get()->name = broadcasterNameProp;
                         }
                     }
                     else if (const char *listenerProp = pList.get_prop(PropertyType_Listener))
                     {
                         if (tokens.size() > 0 && s_pages.size() > 0 && s_pages[s_pages.size() - 1]->broadcasters.size() > 0)
                         {
-                            Listener *listener = new Listener();
-                            listener->name = listenerProp;
+                            s_pages[s_pages.size() - 1]->broadcasters[s_pages[s_pages.size() - 1]->broadcasters.size() - 1]->listeners.push_back(make_unique<Listener>(listenerProp));
+
+                            Listener *listener = s_pages[s_pages.size() - 1]->broadcasters[s_pages[s_pages.size() - 1]->broadcasters.size() - 1]->listeners.back().get();
                             
                             if (const char *listenerProp = pList.get_prop(PropertyType_GoHome))
                                 if ( ! strcmp(listenerProp, "Yes"))
@@ -3876,20 +3852,17 @@ WDL_DLGRET dlgProcMainConfig(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lPar
                             if (const char *listenerProp = pList.get_prop(PropertyType_SelectedTrackReceives))
                                 if ( ! strcmp(listenerProp, "Yes"))
                                     listener->receives = true;
-                            
-                            s_pages[s_pages.size() - 1]->broadcasters[s_pages[s_pages.size() - 1]->broadcasters.size() - 1]->listeners.push_back(listener);
                         }
                     }
                     else if (const char *surfaceProp = pList.get_prop(PropertyType_Surface))
                     {
                         if (const char *surfaceFolderProp = pList.get_prop(PropertyType_SurfaceFolder))
                         {
-                            PageSurfaceLine *surface = new PageSurfaceLine();
-                            
                             if (s_pages.size() > 0)
                             {
-                                s_pages[s_pages.size() - 1]->surfaces.push_back(surface);
-                                
+                                s_pages[s_pages.size() - 1]->surfaces.push_back(make_unique<PageSurfaceLine>());
+                                PageSurfaceLine *surface = s_pages[s_pages.size() - 1]->surfaces.back().get();
+
                                 surface->pageSurface = surfaceProp;
                                 surface->pageSurfaceFolder = surfaceFolderProp;
                                 
@@ -3913,14 +3886,15 @@ WDL_DLGRET dlgProcMainConfig(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lPar
           
             if (s_pages.size() == 0)
             {
-                PageLine *page = new PageLine();
+                s_pages.push_back(make_unique<PageLine>());
+
+                PageLine *page = s_pages.back().get();
+                
                 page->name = "Home";
                 page->followMCP = false;
                 page->synchPages = false;
                 page->isScrollLinkEnabled = false;
                 page->isScrollSynchEnabled = false;
-
-                s_pages.push_back(page);
                 
                 AddListEntry(hwndDlg, page->name, IDC_LIST_Pages);
             }
@@ -3945,12 +3919,12 @@ WDL_DLGRET dlgProcMainConfig(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lPar
         {
             s_surfaces.clear();
         
-            for (auto page : s_pages)
+            for (auto &page : s_pages)
             {
                 page->surfaces.clear();
                 
-                for (int j = 0; j < page->broadcasters.size(); ++j)
-                    page->broadcasters[j]->listeners.clear();
+                for (auto &broadcaster : page->broadcasters)
+                    broadcaster->listeners.clear();
                     
                 page->broadcasters.clear();
             }
@@ -4012,7 +3986,7 @@ WDL_DLGRET dlgProcMainConfig(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lPar
                 
                 fprintf(iniFile, "\n");
                 
-                for (auto page : s_pages)
+                for (auto &page : s_pages)
                 {
                     fprintf(iniFile, "%s=%s", plist.string_from_prop(PropertyType_PageName), page->name.c_str());
                     
@@ -4026,7 +4000,7 @@ WDL_DLGRET dlgProcMainConfig(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lPar
 
                     fprintf(iniFile, "\n");
 
-                    for (auto surface : page->surfaces)
+                    for (auto &surface : page->surfaces)
                     {
                         fprintf(iniFile, "\t%s=%s %s=%s %s=%s %s=%s %s=%d\n",
                             plist.string_from_prop(PropertyType_Surface), surface->pageSurface.c_str(),
@@ -4038,16 +4012,15 @@ WDL_DLGRET dlgProcMainConfig(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lPar
                     
                     fprintf(iniFile, "\n");
                     
-                    for (auto broadcaster : page->broadcasters)
+                    for (auto &broadcaster : page->broadcasters)
                     {
                         if (broadcaster->listeners.size() == 0)
                             continue;
                         
                         fprintf(iniFile, "\t%s=%s\n", plist.string_from_prop(PropertyType_Broadcaster), broadcaster->name.c_str());
                         
-                        for (auto listener : broadcaster->listeners)
+                        for (auto &listener : broadcaster->listeners)
                         {
-                            
                             fprintf(iniFile, "\t\%s=%s ", plist.string_from_prop(PropertyType_Listener), listener->name.c_str());
                             
                             fprintf(iniFile, "%s=%s ", plist.string_from_prop(PropertyType_GoHome), listener->goHome == true ? "Yes" : "No");
