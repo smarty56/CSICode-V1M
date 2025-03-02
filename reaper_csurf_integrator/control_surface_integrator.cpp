@@ -860,12 +860,7 @@ void ControlSurface::ProcessValues(const vector<vector<string>> &lines)
                             accelerationValuesForIncrement_[widgetClass][strtol(lines[i][j].c_str(), NULL, 16)] = j - 2;
                     else if (lines[i][1] == "Val")
                         for (int j = 2; j < lines[i].size(); ++j)
-                        {
-                            if (accelerationValues_.find(widgetClass) == accelerationValues_.end())
-                                accelerationValues_[widgetClass] = new vector<double>();
-                            
-                            accelerationValues_[widgetClass]->push_back(atof(lines[i][j].c_str()));
-                        }
+                            accelerationValues_[widgetClass].push_back(atof(lines[i][j].c_str()));
                 }
             }
         }

@@ -876,7 +876,7 @@ public:
     bool GetIsTwoState() { return isTwoState_; }
     void SetIsTwoState() { isTwoState_ = true; }
     
-    void SetAccelerationValues(const vector<double> *accelerationValues) { accelerationValues_ = *accelerationValues; }
+    void SetAccelerationValues(const vector<double> accelerationValues) { accelerationValues_ = accelerationValues; }
     const vector<double> &GetAccelerationValues() { return accelerationValues_; }
     
     void SetIncomingMessageTime(int lastIncomingMessageTime) { lastIncomingMessageTime_ = lastIncomingMessageTime; }
@@ -1997,7 +1997,7 @@ protected:
     map<const string, map<int, int>> accelerationValuesForIncrement_;
     map<int, int> emptyAccelerationMap_;
     
-    map<const string, vector<double>* > accelerationValues_;
+    map<const string, vector<double>> accelerationValues_;
     vector<double> emptyAccelerationValues_;
     
     void ProcessValues(const vector<vector<string>> &lines);
@@ -2174,12 +2174,12 @@ public:
             return 0;
     }
 
-    const vector<double> *GetAccelerationValues(const char * const  widgetClass)
+    const vector<double> GetAccelerationValues(const char * const  widgetClass)
     {
         if (accelerationValues_.find(widgetClass) != accelerationValues_.end())
             return accelerationValues_[widgetClass];
         else
-            return &emptyAccelerationValues_;
+            return emptyAccelerationValues_;
     }
 
     map<int, int> &GetAccelerationValuesForDecrement(const char * const  widgetClass)
@@ -3665,7 +3665,7 @@ protected:
     vector<unique_ptr<ControlSurface>> surfaces_;
     
 public:
-    Page(CSurfIntegrator *const csi, const char *name, bool followMCP,  bool synchPages, bool isScrollLinkEnabled, bool isScrollSynchEnabled) : csi_(csi), name_(name), trackNavigationManager_(new TrackNavigationManager(csi_, this, followMCP, synchPages, isScrollLinkEnabled, isScrollSynchEnabled)), modifierManager_(new ModifierManager(csi_, this, NULL)) {}
+    Page(CSurfIntegrator *const csi, const char *name, bool followMCP,  bool synchPages, bool isScrollLinkEnabled, bool isScrollSynchEnabled) : csi_(csi), name_(name), trackNavigationManager_(make_unique<TrackNavigationManager>(csi_, this, followMCP, synchPages, isScrollLinkEnabled, isScrollSynchEnabled)), modifierManager_(new ModifierManager(csi_, this, NULL)) {}
 
     ~Page()
     {

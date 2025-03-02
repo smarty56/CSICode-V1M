@@ -67,15 +67,13 @@ struct FXCell
     vector<Widget *> displayWidgets;
 
     string suffix;
-    int modifier;
-    int channel;
+    int modifier = 0;
+    int channel = 0;
     
-    FXCell(ZoneManager *const aZoneManager) : zoneManager(aZoneManager)
-    {
-        modifier = 0;
-        channel = 0;
-    }
-        
+    FXCell(ZoneManager *const aZoneManager) : zoneManager(aZoneManager) {}
+    
+    FXCell(ZoneManager *const aZoneManager, string aSuffix, int aModifier, int aChannel) : zoneManager(aZoneManager), suffix(aSuffix), modifier(aModifier), channel(aChannel) {}
+
     ActionContext *GetNameContext(Widget *widget)
     {
         if (widget == NULL)
@@ -247,7 +245,7 @@ struct SurfaceFXTemplate
     Widget *currentWidget;
     int currentModifier;
 
-    vector<FXCell *> cells;
+    vector<unique_ptr<FXCell>> cells;
     vector<FXRowLayout> fxRowLayouts;
     vector<string> paramWidgets;
     vector<string> paramWidgetParams;
@@ -273,22 +271,22 @@ struct SurfaceFXTemplate
     }
 };
 
-static vector<SurfaceFXTemplate *> s_surfaceFXTemplates;
+static vector<unique_ptr<SurfaceFXTemplate>> s_surfaceFXTemplates;
 
 SurfaceFXTemplate *GetSurfaceFXTemplate(HWND hwnd)
 {
-    for (int i = 0; i < s_surfaceFXTemplates.size(); ++i)
-        if (s_surfaceFXTemplates[i]->hwnd == hwnd)
-            return s_surfaceFXTemplates[i];
+    for (auto &surfaceFXTemplate : s_surfaceFXTemplates)
+        if (surfaceFXTemplate->hwnd == hwnd)
+            return surfaceFXTemplate.get();
     
     return NULL;
 }
 
 SurfaceFXTemplate *GetSurfaceFXTemplate(ZoneManager *zoneManager)
 {
-    for (int i = 0; i < s_surfaceFXTemplates.size(); ++i)
-        if (s_surfaceFXTemplates[i]->zoneManager == zoneManager)
-            return s_surfaceFXTemplates[i];
+    for (auto &surfaceFXTemplate : s_surfaceFXTemplates)
+        if (surfaceFXTemplate->zoneManager == zoneManager)
+            return surfaceFXTemplate.get();
     
     return NULL;
 }
@@ -298,12 +296,12 @@ static FXCell *GetCell(SurfaceFXTemplate *t, Widget *widget, int modifier)
     if (widget == NULL)
         return NULL;
 
-    for (auto cell : t->cells)
+    for (auto &cell : t->cells)
     {
         for (auto controlWidget : cell->controlWidgets)
         {
             if (controlWidget == widget && cell->modifier == modifier)
-                return cell;
+                return cell.get();
         }
     }
 
@@ -685,7 +683,7 @@ static void SaveZone(SurfaceFXTemplate *t)
                         
             int previousChannel = 1;
             
-            for (auto cell : t->cells)
+            for (auto &cell : t->cells)
             {
                 char modifierBuf[SMLBUF];
                 
@@ -1327,7 +1325,7 @@ static void HandleAssigment(SurfaceFXTemplate *t, Widget *widget, int modifier, 
 
 static void ApplyColorsToAll(SurfaceFXTemplate *t, HWND hwndDlg, Widget *widget, int modifier, ActionContext *sourceParamContext, ActionContext *sourceNameContext, ActionContext *sourceValueContext, ZoneManager *zoneManager)
 {
-    for (auto cell : t->cells)
+    for (auto &cell : t->cells)
     {
         for (auto controlWidget : cell->controlWidgets)
         {
@@ -1384,7 +1382,7 @@ static void ApplyColorsToAll(SurfaceFXTemplate *t, HWND hwndDlg, Widget *widget,
 
 static void ApplyFontsAndMarginsToAll(SurfaceFXTemplate *t, HWND hwndDlg, Widget *widget, int modifier, ActionContext *sourceParamContext, ActionContext *sourceNameContext, ActionContext *sourceValueContext)
 {
-    for (auto cell : t->cells)
+    for (auto &cell : t->cells)
     {
         for (auto controlWidget : cell->controlWidgets)
         {
@@ -1480,11 +1478,9 @@ static void CreateContextMap(SurfaceFXTemplate *t)
 
         for (int channel = 1; channel <= zoneManager->GetSurface()->GetNumChannels(); ++channel)
         {
-            FXCell *cell = new FXCell(zoneManager);
-            cell->suffix = t->fxRowLayouts[rowLayoutIdx].suffix;
-            cell->modifier = modifier;
-            cell->channel = channel;
-            t->cells.push_back(cell);
+            t->cells.push_back(make_unique<FXCell>(zoneManager, t->fxRowLayouts[rowLayoutIdx].suffix, modifier, channel));
+            
+            FXCell *cell = t->cells.back().get();
 
             for (int widgetTypesIdx = 0; widgetTypesIdx < t->paramWidgets.size(); ++widgetTypesIdx)
             {
@@ -2232,8 +2228,9 @@ void WidgetMoved(ZoneManager *zoneManager, Widget *widget, int modifier)
 
 static void InitLearnFocusedFXDialog(ZoneManager *zoneManager)
 {
-    SurfaceFXTemplate *t = new SurfaceFXTemplate(zoneManager);
-    s_surfaceFXTemplates.push_back(t);
+    s_surfaceFXTemplates.push_back(make_unique<SurfaceFXTemplate>(zoneManager));
+    
+    SurfaceFXTemplate *t = s_surfaceFXTemplates.back().get();
     LoadTemplates(t);
     
     t->hwnd = CreateDialog(g_hInst, MAKEINTRESOURCE(IDD_DIALOG_LearnFX), g_hwnd, dlgProcLearnFX);
@@ -2307,7 +2304,7 @@ void RequestFocusedFXDialog(ZoneManager *zoneManager)
     else if (s_focusedTrack != NULL && s_surfaceFXTemplates.size() == 1 && s_surfaceFXTemplates[0]->zoneManager == zoneManager)
     {   // If this is only one, release and close -- always true -- for now...
 
-        SurfaceFXTemplate const *t = s_surfaceFXTemplates[0];
+        SurfaceFXTemplate const *t = s_surfaceFXTemplates[0].get();
         if (t->hwnd != NULL)
             SendMessage(t->hwnd, WM_CLOSE, 0, 0);
     }
@@ -2366,11 +2363,11 @@ void InitBlankLearnFocusedFXZone(ZoneManager *zoneManager, Zone *fxZone, MediaTr
 {
     SurfaceFXTemplate *t = NULL;
     
-    for (int i = 0; i < s_surfaceFXTemplates.size(); ++i)
+    for (auto &surfaceFXTemplate : s_surfaceFXTemplates)
     {
-        if (s_surfaceFXTemplates[i]->zoneManager == zoneManager)
+        if (surfaceFXTemplate->zoneManager == zoneManager)
         {
-            t = s_surfaceFXTemplates[i];
+            t = surfaceFXTemplate.get();
             break;
         }
     }
@@ -2459,26 +2456,25 @@ struct SurfaceLine
 {
     string type ;
     string name;
-    int channelCount;
-    int inPort;
-    int outPort;
-    int surfaceRefreshRate;
-    int surfaceMaxPacketsPerRun;
-    int surfaceMaxSysExMessagesPerRun;
+    int channelCount = 0;
+    int inPort = 0;
+    int outPort = 0;
+    int surfaceRefreshRate = s_surfaceDefaultRefreshRate;
+    int surfaceMaxSysExMessagesPerRun = s_surfaceDefaultMaxSysExMessagesPerRun;
+    int surfaceMaxPacketsPerRun = s_surfaceDefaultMaxPacketsPerRun;
     string remoteDeviceIP;
     
-    SurfaceLine()
-    {
-        channelCount = 0;
-        inPort = 0;
-        outPort = 0;
-        surfaceRefreshRate = s_surfaceDefaultRefreshRate;
-        surfaceMaxPacketsPerRun = s_surfaceDefaultMaxPacketsPerRun;
-        surfaceMaxSysExMessagesPerRun = s_surfaceDefaultMaxSysExMessagesPerRun;
-    }
+    SurfaceLine()  {}
+    
+    SurfaceLine(string aType, string aName, int aChannelCount) : type(aType), name(aName), channelCount(aChannelCount) {}
+    
+    SurfaceLine(const char * const aType, string aName, int aChannelCount, int anInPort, int anOutPort, int aRefreshRate, int maxSysExMessages) : type(aType), name(aName), channelCount(aChannelCount), inPort(anInPort), outPort(anOutPort), surfaceRefreshRate(aRefreshRate), surfaceMaxSysExMessagesPerRun(maxSysExMessages) {}
+
+    SurfaceLine(string aType, string aName, int aChannelCount, int anInPort, int anOutPort, int aRefreshRate, int maxPackets, string aRemoteDeviceIP) : type(aType), name(aName), channelCount(aChannelCount), inPort(anInPort), outPort(anOutPort), surfaceRefreshRate(aRefreshRate), surfaceMaxPacketsPerRun(maxPackets), remoteDeviceIP(aRemoteDeviceIP) {}
+
 };
 
-static vector<SurfaceLine *> s_surfaces;
+static vector<unique_ptr<SurfaceLine>> s_surfaces;
 
 struct PageSurfaceLine
 {
@@ -2683,7 +2679,7 @@ static WDL_DLGRET dlgProcPageSurface(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPA
                     if (filesystem::is_directory(file.path()))
                         AddComboEntry(hwndDlg, 0, (char *)file.path().filename().c_str(), IDC_COMBO_PageSurfaceFolder);
             
-            for (auto surface : s_surfaces)
+            for (auto &surface : s_surfaces)
                 AddComboEntry(hwndDlg, 0, (char *)surface->name.c_str(), IDC_COMBO_PageSurface);
             
             if (s_editMode)
@@ -3002,11 +2998,11 @@ static WDL_DLGRET dlgProcAdvancedSetup(HWND hwndDlg, UINT uMsg, WPARAM wParam, L
         {
             WDL_UTF8_HookComboBox(GetDlgItem(hwndDlg, IDC_AddBroadcaster));
             WDL_UTF8_HookComboBox(GetDlgItem(hwndDlg, IDC_AddListener));
-            for (auto surface : s_surfaces)
+            for (auto &surface : s_surfaces)
                 AddComboEntry(hwndDlg, 0, (char *)surface->name.c_str(), IDC_AddBroadcaster);
             SendMessage(GetDlgItem(hwndDlg, IDC_AddBroadcaster), CB_SETCURSEL, 0, 0);
 
-            for (auto surface : s_surfaces)
+            for (auto &surface : s_surfaces)
                 AddComboEntry(hwndDlg, 0, (char *)surface->name.c_str(), IDC_AddListener);
             SendMessage(GetDlgItem(hwndDlg, IDC_AddListener), CB_SETCURSEL, 0, 0);
             
@@ -3368,16 +3364,7 @@ WDL_DLGRET dlgProcMainConfig(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lPar
                             DialogBox(g_hInst, MAKEINTRESOURCE(IDD_DIALOG_MidiSurface), hwndDlg, dlgProcMidiSurface);
                             if (s_dlgResult == IDOK)
                             {
-                                SurfaceLine *surface = new SurfaceLine();
-                                surface->type = s_MidiSurfaceToken;
-                                surface->name = s_surfaceName;
-                                surface->channelCount = s_surfaceChannelCount;
-                                surface->inPort = s_surfaceInPort;
-                                surface->outPort = s_surfaceOutPort;
-                                surface->surfaceRefreshRate = s_surfaceRefreshRate;
-                                surface->surfaceMaxSysExMessagesPerRun = s_surfaceMaxSysExMessagesPerRun;
-
-                                s_surfaces.push_back(surface);
+                                s_surfaces.push_back(make_unique<SurfaceLine>(s_MidiSurfaceToken, s_MidiSurfaceToken, s_surfaceChannelCount,                                                                       s_surfaceInPort, s_surfaceOutPort, s_surfaceRefreshRate, s_surfaceMaxSysExMessagesPerRun ));
                                 
                                 AddListEntry(hwndDlg, s_surfaceName.c_str(), IDC_LIST_Surfaces);
                                 SendMessage(GetDlgItem(hwndDlg, IDC_LIST_Surfaces), LB_SETCURSEL, s_surfaces.size() - 1, 0);
@@ -3393,18 +3380,7 @@ WDL_DLGRET dlgProcMainConfig(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lPar
                             DialogBox(g_hInst, MAKEINTRESOURCE(IDD_DIALOG_OSCSurface), hwndDlg, dlgProcOSCSurface);
                             if (s_dlgResult == IDOK)
                             {
-                                SurfaceLine *surface = new SurfaceLine();
-                            
-                                surface->name = s_surfaceName;
-                                surface->type = s_surfaceType;
-                                surface->channelCount = s_surfaceChannelCount;
-                                surface->remoteDeviceIP = s_surfaceRemoteDeviceIP;
-                                surface->inPort = s_surfaceInPort;
-                                surface->outPort = s_surfaceOutPort;
-                                surface->surfaceRefreshRate = s_surfaceRefreshRate;
-                                surface->surfaceMaxPacketsPerRun = s_surfaceMaxPacketsPerRun;
-                                
-                                s_surfaces.push_back(surface);
+                                s_surfaces.push_back(make_unique<SurfaceLine>(s_MidiSurfaceToken, s_MidiSurfaceToken, s_surfaceChannelCount,                                                                       s_surfaceInPort, s_surfaceOutPort, s_surfaceRefreshRate, s_surfaceMaxPacketsPerRun, s_surfaceRemoteDeviceIP));
                                 
                                 AddListEntry(hwndDlg, s_surfaceName.c_str(), IDC_LIST_Surfaces);
                                 SendMessage(GetDlgItem(hwndDlg, IDC_LIST_Surfaces), LB_SETCURSEL, s_surfaces.size() - 1, 0);
@@ -3642,7 +3618,7 @@ WDL_DLGRET dlgProcMainConfig(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lPar
                                 s_surfaces.erase(s_surfaces.begin() + index);
                                 
                                 SendMessage(GetDlgItem(hwndDlg, IDC_LIST_Surfaces), LB_RESETCONTENT, 0, 0);
-                                for (auto surface : s_surfaces)
+                                for (auto &surface : s_surfaces)
                                     AddListEntry(hwndDlg, surface->name, IDC_LIST_Surfaces);
                                 SendMessage(GetDlgItem(hwndDlg, IDC_LIST_Surfaces), LB_SETCURSEL, index, 0);
                                 
@@ -3777,7 +3753,7 @@ WDL_DLGRET dlgProcMainConfig(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lPar
                         {
                             if (const char *surfaceChannelCountProp = pList.get_prop(PropertyType_SurfaceChannelCount))
                             {
-                                SurfaceLine *surface = new SurfaceLine();
+                                SurfaceLine *surface = new SurfaceLine(surfaceTypeProp, surfaceNameProp, atoi(surfaceChannelCountProp));
                                 
                                 surface->type = surfaceTypeProp;
                                 surface->name = surfaceNameProp;
@@ -3795,9 +3771,11 @@ WDL_DLGRET dlgProcMainConfig(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lPar
                                         surface->surfaceRefreshRate = atoi(pList.get_prop(PropertyType_MIDISurfaceRefreshRate));
                                         surface->surfaceMaxSysExMessagesPerRun = atoi(pList.get_prop(PropertyType_MaxMIDIMesssagesPerRun));
 
-                                        s_surfaces.push_back(surface);
-                                        
-                                        AddListEntry(hwndDlg, surface->name, IDC_LIST_Surfaces);
+                                        {
+                                            s_surfaces.push_back(make_unique<SurfaceLine>(surfaceTypeProp, surfaceNameProp, atoi(surfaceChannelCountProp),                                                                       atoi(pList.get_prop(PropertyType_MidiInput)), atoi(pList.get_prop(PropertyType_MidiOutput)), s_surfaceRefreshRate, atoi(pList.get_prop(PropertyType_MaxMIDIMesssagesPerRun))));
+                                            
+                                            AddListEntry(hwndDlg, surface->name, IDC_LIST_Surfaces);
+                                        }
                                     }
                                 }
                                 else if (( ! strcmp(surfaceTypeProp, s_OSCSurfaceToken) || ! strcmp(surfaceTypeProp, s_OSCX32SurfaceToken)) && tokens.size() == 7)
@@ -3807,12 +3785,8 @@ WDL_DLGRET dlgProcMainConfig(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lPar
                                         pList.get_prop(PropertyType_TransmitToIPAddress) != NULL &&
                                         pList.get_prop(PropertyType_MaxPacketsPerRun) != NULL)
                                     {
-                                        surface->inPort = atoi(pList.get_prop(PropertyType_ReceiveOnPort));
-                                        surface->outPort = atoi(pList.get_prop(PropertyType_TransmitToPort));
-                                        surface->remoteDeviceIP = pList.get_prop(PropertyType_TransmitToIPAddress);
-                                        surface->surfaceMaxPacketsPerRun = atoi(pList.get_prop(PropertyType_MaxPacketsPerRun));
-                                        
-                                        s_surfaces.push_back(surface);
+                                        s_surfaces.push_back(make_unique<SurfaceLine>(surfaceTypeProp, surfaceNameProp, atoi(surfaceChannelCountProp),                                                                       atoi(pList.get_prop(PropertyType_ReceiveOnPort)), atoi(pList.get_prop(PropertyType_TransmitToPort)), s_surfaceRefreshRate, atoi(pList.get_prop(PropertyType_MaxPacketsPerRun)), pList.get_prop(PropertyType_TransmitToIPAddress)));
+
                                         
                                         AddListEntry(hwndDlg, surface->name, IDC_LIST_Surfaces);
                                     }
@@ -3997,7 +3971,7 @@ WDL_DLGRET dlgProcMainConfig(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lPar
                 
                 fprintf(iniFile, "\n");
                 
-                for (auto surface : s_surfaces)
+                for (auto &surface : s_surfaces)
                 {
                     string type = surface->type;
                                         
