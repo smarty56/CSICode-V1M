@@ -2275,6 +2275,8 @@ void Zone::UpdateCurrentActionContextModifier(Widget *widget)
 
 ActionContext *Zone::AddActionContext(Widget *widget, int modifier, Zone *zone, const char *actionName, vector<string> &params)
 {
+    //unique_ptr<ActionContext> *p = make_unique<ActionContext>(csi_, csi_->GetAction(actionName), widget, zone, 0, params);
+    
     actionContextDictionary_[widget][modifier].push_back(new ActionContext(csi_, csi_->GetAction(actionName), widget, zone, 0, params));
         
     return actionContextDictionary_[widget][modifier].back();
