@@ -3865,7 +3865,7 @@ OSC_ControlSurfaceIO::~OSC_ControlSurfaceIO()
             if (s_inputSockets.Get(x)->socket == inSocket_)
             {
                 if (!--s_inputSockets.Get(x)->refcnt)
-                    s_inputSockets.Delete(x);
+                    s_inputSockets.Delete(x, true);
                 break;
             }
         }
@@ -3877,7 +3877,7 @@ OSC_ControlSurfaceIO::~OSC_ControlSurfaceIO()
             if (s_outputSockets.Get(x)->socket == outSocket_)
             {
                 if (!--s_outputSockets.Get(x)->refcnt)
-                    s_outputSockets.Delete(x);
+                    s_outputSockets.Delete(x, true);
                 break;
             }
         }

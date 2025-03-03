@@ -3352,7 +3352,7 @@ WDL_DLGRET dlgProcMainConfig(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lPar
                             DialogBox(g_hInst, MAKEINTRESOURCE(IDD_DIALOG_OSCSurface), hwndDlg, dlgProcOSCSurface);
                             if (s_dlgResult == IDOK)
                             {
-                                s_surfaces.push_back(make_unique<SurfaceLine>(s_MidiSurfaceToken, s_MidiSurfaceToken, s_surfaceChannelCount,                                                                       s_surfaceInPort, s_surfaceOutPort, s_surfaceRefreshRate, s_surfaceMaxPacketsPerRun, s_surfaceRemoteDeviceIP));
+                                s_surfaces.push_back(make_unique<SurfaceLine>(s_OSCSurfaceToken, s_OSCSurfaceToken, s_surfaceChannelCount,                                                                       s_surfaceInPort, s_surfaceOutPort, s_surfaceRefreshRate, s_surfaceMaxPacketsPerRun, s_surfaceRemoteDeviceIP));
                                 
                                 AddListEntry(hwndDlg, s_surfaceName.c_str(), IDC_LIST_Surfaces);
                                 SendMessage(GetDlgItem(hwndDlg, IDC_LIST_Surfaces), LB_SETCURSEL, s_surfaces.size() - 1, 0);
