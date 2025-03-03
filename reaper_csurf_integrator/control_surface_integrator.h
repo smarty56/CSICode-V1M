@@ -926,15 +926,15 @@ private:
         
     double holdDelayAmount_ = 1.0;
     
-    Zone *learnFocusedFXZone_ = NULL;
-    
+    shared_ptr<Zone> learnFocusedFXZone_ = NULL;
+
     unique_ptr<Zone> homeZone_;
 
     vector<unique_ptr<Zone>> goZones_;
 
     vector<ZoneManager *> listeners_; // does not own pointers
     
-    vector<Zone *> zonesToBeDeleted_;
+    vector<shared_ptr<Zone>> zonesToBeDeleted_;
     
     bool listensToGoHome_ = false;
     bool listensToSends_ = false;
@@ -943,14 +943,14 @@ private:
     bool usesLocalFXSlot_ = false;
     bool listensToSelectedTrackFX_ = false;
 
-    Zone *lastTouchedFXParamZone_ = NULL;
+    shared_ptr<Zone> lastTouchedFXParamZone_ = NULL;
     bool isLastTouchedFXParamMappingEnabled_= false;
     
-    Zone *focusedFXZone_ = NULL;
+    shared_ptr<Zone> focusedFXZone_ = NULL;
     bool isFocusedFXMappingEnabled_ = true;
     
-    vector<Zone *> selectedTrackFXZones_;
-    Zone *fxSlotZone_ = NULL;
+    vector<shared_ptr<Zone>> selectedTrackFXZones_;
+    shared_ptr<Zone> fxSlotZone_ = NULL;
     
     int trackSendOffset_ = 0;
     int trackReceiveOffset_ = 0;
@@ -1114,7 +1114,11 @@ private:
     void ClearLastTouchedFXParam()
     {
         if (lastTouchedFXParamZone_ != NULL)
+        {
             lastTouchedFXParamZone_->Deactivate();
+            zonesToBeDeleted_.push_back(lastTouchedFXParamZone_);
+            lastTouchedFXParamZone_ = NULL;
+        }
     }
     
     void ClearFocusedFX()
@@ -1129,11 +1133,13 @@ private:
         
     void ClearSelectedTrackFX()
     {
-        for (auto selectedTrackFXZone : selectedTrackFXZones_)
+        for (auto &selectedTrackFXZone : selectedTrackFXZones_)
         {
             selectedTrackFXZone->Deactivate();
             zonesToBeDeleted_.push_back(selectedTrackFXZone);
         }
+        
+        selectedTrackFXZones_.clear();
     }
     
     void ClearFXSlot()
@@ -1160,34 +1166,14 @@ public:
 
     ~ZoneManager()
     {            
-        if (focusedFXZone_ != NULL)
-        {
-            delete focusedFXZone_;
-            focusedFXZone_ = NULL;
-        }
-            
-        if (lastTouchedFXParamZone_ != NULL)
-        {
-            delete lastTouchedFXParamZone_;
-            lastTouchedFXParamZone_ = NULL;
-        }
-            
-        if (fxSlotZone_ != NULL)
-        {
-            delete fxSlotZone_;
-            fxSlotZone_ = NULL;
-        }
-            
-        if (learnFocusedFXZone_ != NULL)
-        {
-            delete learnFocusedFXZone_;
-            learnFocusedFXZone_ = NULL;
-        }
-            
-        goZones_.clear();
-
+        focusedFXZone_ = NULL;
+        lastTouchedFXParamZone_ = NULL;
+        fxSlotZone_ = NULL;
+        learnFocusedFXZone_ = NULL;
         selectedTrackFXZones_.clear();
         
+        goZones_.clear();
+
         zoneInfo_.clear();
     }
     
@@ -1239,7 +1225,7 @@ public:
     bool GetIsFocusedFXMappingEnabled() { return isFocusedFXMappingEnabled_; }
     bool GetIsLastTouchedFXParamMappingEnabled() { return isLastTouchedFXParamMappingEnabled_; }
     
-    Zone *GetLearnedFocusedFXZone() { return  learnFocusedFXZone_;  }
+    Zone *GetLearnedFocusedFXZone() { return  learnFocusedFXZone_.get();  }
     
     const vector<unique_ptr<ActionContext>> &GetLearnFocusedFXActionContexts(Widget *widget, int modifier)
     {
@@ -1313,8 +1299,8 @@ public:
     {
         if (zoneInfo_.find(fxName) != zoneInfo_.end())
         {
-            learnFocusedFXZone_ = new Zone(csi_, this, GetNavigatorForTrack(track), fxIndex, fxName, zoneInfo_[fxName].alias, zoneInfo_[fxName].filePath);
-            LoadZoneFile(learnFocusedFXZone_, "");
+            learnFocusedFXZone_ = make_shared<Zone>(csi_, this, GetNavigatorForTrack(track), fxIndex, fxName, zoneInfo_[fxName].alias, zoneInfo_[fxName].filePath);
+            LoadZoneFile(learnFocusedFXZone_.get(), "");
             
             learnFocusedFXZone_->Activate();
         }
@@ -1335,11 +1321,11 @@ public:
             snprintf(fxFullFilePath, sizeof(fxFullFilePath), "%s/%s.zon", fxFilePath, fxFileName.c_str());
             info.filePath = fxFullFilePath;
             
-            learnFocusedFXZone_ = new Zone(csi_, this, GetNavigatorForTrack(track), fxIndex, fxName, info.alias, info.filePath);
+            learnFocusedFXZone_ = make_shared<Zone>(csi_, this, GetNavigatorForTrack(track), fxIndex, fxName, info.alias, info.filePath);
             
             if (learnFocusedFXZone_)
             {
-                InitBlankLearnFocusedFXZone(this, learnFocusedFXZone_, track, fxIndex);
+                InitBlankLearnFocusedFXZone(this, learnFocusedFXZone_.get(), track, fxIndex);
                 learnFocusedFXZone_->Activate();
             }
         }

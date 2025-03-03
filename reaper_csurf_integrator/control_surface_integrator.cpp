@@ -2489,8 +2489,8 @@ void ZoneManager::Initialize()
     
     if (zoneInfo_.find("LastTouchedFXParam") != zoneInfo_.end())
     {
-        lastTouchedFXParamZone_ = new Zone(csi_, this, GetFocusedFXNavigator(), 0, "LastTouchedFXParam", "LastTouchedFXParam", zoneInfo_["LastTouchedFXParam"].filePath);
-        LoadZoneFile(lastTouchedFXParamZone_, "");
+        lastTouchedFXParamZone_ = make_shared<Zone>(csi_, this, GetFocusedFXNavigator(), 0, "LastTouchedFXParam", "LastTouchedFXParam", zoneInfo_["LastTouchedFXParam"].filePath);
+        LoadZoneFile(lastTouchedFXParamZone_.get(), "");
     }
         
     homeZone_->Activate();
@@ -2843,8 +2843,8 @@ void ZoneManager::CheckFocusedFXState()
         
         if (zoneInfo_.find(fxName) != zoneInfo_.end())
         {
-            focusedFXZone_ = new Zone(csi_, this, GetFocusedFXNavigator(), fxSlot, fxName, zoneInfo_[fxName].alias, zoneInfo_[fxName].filePath.c_str());
-            LoadZoneFile(focusedFXZone_, "");
+            focusedFXZone_ = make_shared<Zone>(csi_, this, GetFocusedFXNavigator(), fxSlot, fxName, zoneInfo_[fxName].alias, zoneInfo_[fxName].filePath.c_str());
+            LoadZoneFile(focusedFXZone_.get(), "");
             focusedFXZone_->Activate();
         }            
     }
@@ -2864,8 +2864,8 @@ void ZoneManager::GoSelectedTrackFX()
             
             if (zoneInfo_.find(fxName) != zoneInfo_.end())
             {
-                Zone *zone = new Zone(csi_, this, GetSelectedTrackNavigator(), i, fxName, zoneInfo_[fxName].alias, zoneInfo_[fxName].filePath);
-                LoadZoneFile(zone, "");
+                shared_ptr<Zone> zone = make_shared<Zone>(csi_, this, GetSelectedTrackNavigator(), i, fxName, zoneInfo_[fxName].alias, zoneInfo_[fxName].filePath);
+                LoadZoneFile(zone.get(), "");
                 selectedTrackFXZones_.push_back(zone);
                 zone->Activate();
             }
@@ -2885,8 +2885,8 @@ void ZoneManager::GoFXSlot(MediaTrack *track, Navigator *navigator, int fxSlot)
     if (zoneInfo_.find(fxName) != zoneInfo_.end())
     {
         ClearFXSlot();        
-        fxSlotZone_ = new Zone(csi_, this, navigator, fxSlot, fxName, zoneInfo_[fxName].alias, zoneInfo_[fxName].filePath);
-        LoadZoneFile(fxSlotZone_, "");
+        fxSlotZone_ = make_shared<Zone>(csi_, this, navigator, fxSlot, fxName, zoneInfo_[fxName].alias, zoneInfo_[fxName].filePath);
+        LoadZoneFile(fxSlotZone_.get(), "");
         fxSlotZone_->Activate();
     }
     else
