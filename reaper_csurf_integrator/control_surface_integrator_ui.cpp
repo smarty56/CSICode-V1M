@@ -2464,6 +2464,11 @@ struct SurfaceLine
     string remoteDeviceIP;
     
     SurfaceLine()  {}
+        
+    SurfaceLine(const char * const aType, string aName, int aChannelCount, int anInPort, int anOutPort, int aRefreshRate, int maxSysExMessages) : type(aType), name(aName), channelCount(aChannelCount), inPort(anInPort), outPort(anOutPort), surfaceRefreshRate(aRefreshRate), surfaceMaxSysExMessagesPerRun(maxSysExMessages) {}
+
+    SurfaceLine(string aType, string aName, int aChannelCount, int anInPort, int anOutPort, int aRefreshRate, int maxPackets, string aRemoteDeviceIP) : type(aType), name(aName), channelCount(aChannelCount), inPort(anInPort), outPort(anOutPort), surfaceRefreshRate(aRefreshRate), surfaceMaxPacketsPerRun(maxPackets), remoteDeviceIP(aRemoteDeviceIP) {}
+
 };
 
 static vector<unique_ptr<SurfaceLine>> s_surfaces;
@@ -2494,7 +2499,9 @@ struct Listener
     bool selectedTrackFX = false;
     bool modifiers = false;
     
-    Listener() {}
+    Listener(string aName, bool aGoHome, bool aSends, bool aReceives, bool anFXMenu, bool aSelectedTrackFX, bool aModifiers) : name(aName), goHome(aGoHome), sends(aSends), receives(aReceives), fxMenu(anFXMenu), selectedTrackFX(aSelectedTrackFX), modifiers(aModifiers)  {}
+    
+    Listener(string aName) : name(aName) {}
 };
 
 struct Broadcaster
@@ -2532,19 +2539,8 @@ static void TransferBroadcasters(vector<unique_ptr<Broadcaster>> &source, vector
         destinationBroadcaster->name = source[i]->name;
         
         for (auto &listener : source[i]->listeners)
-        {
-            destinationBroadcaster->listeners.push_back(make_unique<Listener>());
-            
-            Listener *destinationListener = destinationBroadcaster->listeners.back().get();
-            
-            destinationListener->name = listener->name;
-            destinationListener->goHome = listener->goHome;
-            destinationListener->sends = listener->sends;
-            destinationListener->receives = listener->receives;
-            destinationListener->fxMenu = listener->fxMenu;
-            destinationListener->modifiers = listener->modifiers;
-            destinationListener->selectedTrackFX = listener->selectedTrackFX;
-        }
+            destinationBroadcaster->listeners.push_back(make_unique<Listener>(listener->name, listener->goHome,listener->sends, listener->receives,
+                                                                              listener->fxMenu, listener->selectedTrackFX, listener->modifiers));
     }
 }
 
@@ -3082,8 +3078,7 @@ static WDL_DLGRET dlgProcAdvancedSetup(HWND hwndDlg, UINT uMsg, WPARAM wParam, L
                                     foundit = true;
                             if (! foundit)
                             {
-                                s_broadcasters[broadcasterIndex]->listeners.push_back(make_unique<Listener>());
-                                s_broadcasters[broadcasterIndex]->listeners.back().get()->name = listenerName;
+                                s_broadcasters[broadcasterIndex]->listeners.push_back(make_unique<Listener>(listenerName));
                                 AddListEntry(hwndDlg, listenerName, IDC_LIST_Listeners);
                                 SendMessage(GetDlgItem(hwndDlg, IDC_LIST_Listeners), LB_SETCURSEL,  s_broadcasters[broadcasterIndex]->listeners.size() - 1, 0);
                                 ClearCheckBoxes(hwndDlg);
@@ -3339,18 +3334,7 @@ WDL_DLGRET dlgProcMainConfig(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lPar
                             DialogBox(g_hInst, MAKEINTRESOURCE(IDD_DIALOG_MidiSurface), hwndDlg, dlgProcMidiSurface);
                             if (s_dlgResult == IDOK)
                             {
-                                s_surfaces.push_back(make_unique<SurfaceLine>());
-                                
-                                SurfaceLine *surface = s_surfaces.back().get();
-                                
-                                surface->type = s_MidiSurfaceToken;
-                                surface->name = s_surfaceName;
-                                surface->channelCount = s_surfaceChannelCount;
-                                surface->inPort = s_surfaceInPort;
-                                surface->outPort = s_surfaceOutPort;
-                                surface->surfaceRefreshRate = s_surfaceRefreshRate;
-                                surface->surfaceMaxSysExMessagesPerRun = s_surfaceMaxSysExMessagesPerRun;
-
+                                s_surfaces.push_back(make_unique<SurfaceLine>(s_MidiSurfaceToken, s_surfaceName, s_surfaceChannelCount,                                                                       s_surfaceInPort, s_surfaceOutPort, s_surfaceRefreshRate, s_surfaceMaxSysExMessagesPerRun ));
                                 
                                 AddListEntry(hwndDlg, s_surfaceName.c_str(), IDC_LIST_Surfaces);
                                 SendMessage(GetDlgItem(hwndDlg, IDC_LIST_Surfaces), LB_SETCURSEL, s_surfaces.size() - 1, 0);
@@ -3366,19 +3350,7 @@ WDL_DLGRET dlgProcMainConfig(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lPar
                             DialogBox(g_hInst, MAKEINTRESOURCE(IDD_DIALOG_OSCSurface), hwndDlg, dlgProcOSCSurface);
                             if (s_dlgResult == IDOK)
                             {
-                                s_surfaces.push_back(make_unique<SurfaceLine>());
-                                
-                                SurfaceLine *surface = s_surfaces.back().get();
-                            
-                                surface->name = s_surfaceName;
-                                surface->type = s_surfaceType;
-                                surface->channelCount = s_surfaceChannelCount;
-                                surface->remoteDeviceIP = s_surfaceRemoteDeviceIP;
-                                surface->inPort = s_surfaceInPort;
-                                surface->outPort = s_surfaceOutPort;
-                                surface->surfaceRefreshRate = s_surfaceRefreshRate;
-                                surface->surfaceMaxPacketsPerRun = s_surfaceMaxPacketsPerRun;
-
+                                s_surfaces.push_back(make_unique<SurfaceLine>(s_OSCSurfaceToken, s_surfaceName, s_surfaceChannelCount,                                                                       s_surfaceInPort, s_surfaceOutPort, s_surfaceRefreshRate, s_surfaceMaxPacketsPerRun, s_surfaceRemoteDeviceIP));
                                 
                                 AddListEntry(hwndDlg, s_surfaceName.c_str(), IDC_LIST_Surfaces);
                                 SendMessage(GetDlgItem(hwndDlg, IDC_LIST_Surfaces), LB_SETCURSEL, s_surfaces.size() - 1, 0);
@@ -3760,18 +3732,8 @@ WDL_DLGRET dlgProcMainConfig(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lPar
                                         pList.get_prop(PropertyType_MIDISurfaceRefreshRate) != NULL &&
                                         pList.get_prop(PropertyType_MaxMIDIMesssagesPerRun) != NULL)
                                     {
-                                        s_surfaces.push_back(make_unique<SurfaceLine>());
+                                        s_surfaces.push_back(make_unique<SurfaceLine>(surfaceTypeProp, surfaceNameProp, atoi(surfaceChannelCountProp),                                                                       atoi(pList.get_prop(PropertyType_MidiInput)), atoi(pList.get_prop(PropertyType_MidiOutput)), atoi(pList.get_prop(PropertyType_MIDISurfaceRefreshRate)), atoi(pList.get_prop(PropertyType_MaxMIDIMesssagesPerRun))));
                                         
-                                        SurfaceLine *surface = s_surfaces.back().get();
-                                        
-                                        surface->type = s_MidiSurfaceToken;
-                                        surface->name = s_surfaceName;
-                                        surface->channelCount = s_surfaceChannelCount;
-                                        surface->inPort = s_surfaceInPort;
-                                        surface->outPort = s_surfaceOutPort;
-                                        surface->surfaceRefreshRate = s_surfaceRefreshRate;
-                                        surface->surfaceMaxSysExMessagesPerRun = s_surfaceMaxSysExMessagesPerRun;
-
                                         AddListEntry(hwndDlg, s_surfaces.back().get()->name, IDC_LIST_Surfaces);
                                     }
                                 }
@@ -3782,19 +3744,7 @@ WDL_DLGRET dlgProcMainConfig(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lPar
                                         pList.get_prop(PropertyType_TransmitToIPAddress) != NULL &&
                                         pList.get_prop(PropertyType_MaxPacketsPerRun) != NULL)
                                     {
-                                        s_surfaces.push_back(make_unique<SurfaceLine>());
-                                        
-                                        SurfaceLine *surface = s_surfaces.back().get();
-                                    
-                                        surface->name = s_surfaceName;
-                                        surface->type = s_surfaceType;
-                                        surface->channelCount = s_surfaceChannelCount;
-                                        surface->remoteDeviceIP = s_surfaceRemoteDeviceIP;
-                                        surface->inPort = s_surfaceInPort;
-                                        surface->outPort = s_surfaceOutPort;
-                                        surface->surfaceRefreshRate = s_surfaceRefreshRate;
-                                        surface->surfaceMaxPacketsPerRun = s_surfaceMaxPacketsPerRun;
-
+                                        s_surfaces.push_back(make_unique<SurfaceLine>(surfaceTypeProp, surfaceNameProp, atoi(surfaceChannelCountProp),                                                                       atoi(pList.get_prop(PropertyType_ReceiveOnPort)), atoi(pList.get_prop(PropertyType_TransmitToPort)), 0, atoi(pList.get_prop(PropertyType_MaxPacketsPerRun)), pList.get_prop(PropertyType_TransmitToIPAddress)));
                                         
                                         AddListEntry(hwndDlg, s_surfaces.back().get()->name, IDC_LIST_Surfaces);
                                     }
@@ -3858,11 +3808,9 @@ WDL_DLGRET dlgProcMainConfig(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lPar
                     {
                         if (tokens.size() > 0 && s_pages.size() > 0 && s_pages[s_pages.size() - 1]->broadcasters.size() > 0)
                         {
-                            s_pages[s_pages.size() - 1]->broadcasters[s_pages[s_pages.size() - 1]->broadcasters.size() - 1]->listeners.push_back(make_unique<Listener>());
-                            
+                            s_pages[s_pages.size() - 1]->broadcasters[s_pages[s_pages.size() - 1]->broadcasters.size() - 1]->listeners.push_back(make_unique<Listener>(listenerProp));
+
                             Listener *listener = s_pages[s_pages.size() - 1]->broadcasters[s_pages[s_pages.size() - 1]->broadcasters.size() - 1]->listeners.back().get();
-                            
-                            listener->name = listenerProp;
                             
                             if (const char *listenerProp = pList.get_prop(PropertyType_GoHome))
                                 if ( ! strcmp(listenerProp, "Yes"))
