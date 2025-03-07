@@ -1130,11 +1130,6 @@ void CSurfIntegrator::InitActionsDictionary()
 
 void CSurfIntegrator::Init()
 {
-    if (isInitialized_)
-        return;
-    
-    isInitialized_ = true;
-    
     pages_.clear();
     
     string currentBroadcaster;

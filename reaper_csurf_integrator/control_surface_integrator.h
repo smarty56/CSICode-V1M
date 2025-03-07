@@ -3916,9 +3916,7 @@ class CSurfIntegrator : public IReaperControlSurface
 {
 private:
     char configtmp[1024];
-
-    bool isInitialized_ = false;
-    
+   
     vector<unique_ptr<Midi_ControlSurfaceIO>> midiSurfacesIO_;
     vector<unique_ptr<OSC_ControlSurfaceIO>> oscSurfacesIO_;
 
