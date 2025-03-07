@@ -2637,6 +2637,8 @@ static WDL_DLGRET dlgProcPage(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lPa
     return 0;
 }
 
+static vector<string> s_surfaceFolders;
+
 static WDL_DLGRET dlgProcPageSurface(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     switch (uMsg)
@@ -2646,12 +2648,17 @@ static WDL_DLGRET dlgProcPageSurface(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPA
             WDL_UTF8_HookComboBox(GetDlgItem(hwndDlg, IDC_COMBO_PageSurfaceFolder));
             WDL_UTF8_HookComboBox(GetDlgItem(hwndDlg, IDC_COMBO_PageSurface));
 
+            s_surfaceFolders.clear();
+            
             filesystem::path path { string(GetResourcePath()) + "/CSI/Surfaces"};
             
             if (filesystem::exists(path) && filesystem::is_directory(path))
                 for (auto &file : filesystem::directory_iterator(path))
                     if (filesystem::is_directory(file.path()))
-                        AddComboEntry(hwndDlg, 0, (char *)file.path().filename().c_str(), IDC_COMBO_PageSurfaceFolder);
+                        s_surfaceFolders.push_back(file.path().filename());
+            
+            for (auto surfaceFolder : s_surfaceFolders)
+                AddComboEntry(hwndDlg, 0, (char *)surfaceFolder.c_str(), IDC_COMBO_PageSurfaceFolder);
             
             for (auto &surface : s_surfaces)
                 AddComboEntry(hwndDlg, 0, (char *)surface->name.c_str(), IDC_COMBO_PageSurface);
