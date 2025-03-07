@@ -2655,7 +2655,7 @@ static WDL_DLGRET dlgProcPageSurface(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPA
             if (filesystem::exists(path) && filesystem::is_directory(path))
                 for (auto &file : filesystem::directory_iterator(path))
                     if (filesystem::is_directory(file.path()))
-                        s_surfaceFolders.push_back(file.path().filename());
+                        s_surfaceFolders.push_back(file.path().filename().string());
             
             for (auto surfaceFolder : s_surfaceFolders)
                 AddComboEntry(hwndDlg, 0, (char *)surfaceFolder.c_str(), IDC_COMBO_PageSurfaceFolder);
