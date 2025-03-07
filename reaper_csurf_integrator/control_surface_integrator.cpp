@@ -3795,7 +3795,7 @@ void Midi_ControlSurface::SendMidiSysExMessage(MIDI_event_ex_t *midiMessage)
             output += buf;
         }
         
-        output + "\n";
+        output += "\n";
 
         ShowConsoleMsg(output.c_str());
     }
@@ -3939,11 +3939,11 @@ void OSC_X32ControlSurfaceIO::HandleExternalInput(OSC_ControlSurface *surface)
                        string x32Select = message->addressPattern() + "/";
                        
                        if (value < 10)
-                           x32Select + "0";
+                           x32Select += "0";
 
                        char buf[64];
                        snprintf(buf, sizeof(buf), "%d", value);
-                       x32Select + buf;
+                       x32Select += buf;
                                               
                        surface->ProcessOSCMessage(x32Select.c_str(), 1.0);
                    }

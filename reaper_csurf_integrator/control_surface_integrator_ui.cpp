@@ -4004,7 +4004,7 @@ WDL_DLGRET dlgProcMainConfig(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lPar
                         
                         for (auto &listener : broadcaster->listeners)
                         {
-                            fprintf(iniFile, "\t\%s=%s ", plist.string_from_prop(PropertyType_Listener), listener->name.c_str());
+                            fprintf(iniFile, "\t%s=%s ", plist.string_from_prop(PropertyType_Listener), listener->name.c_str());
                             
                             fprintf(iniFile, "%s=%s ", plist.string_from_prop(PropertyType_GoHome), listener->goHome == true ? "Yes" : "No");
                             fprintf(iniFile, "%s=%s ", plist.string_from_prop(PropertyType_SelectedTrackSends), listener->sends == true ? "Yes" : "No");
