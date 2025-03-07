@@ -2643,8 +2643,9 @@ static WDL_DLGRET dlgProcPageSurface(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPA
     {
         case WM_INITDIALOG:
         {
+            WDL_UTF8_HookComboBox(GetDlgItem(hwndDlg, IDC_COMBO_PageSurfaceFolder));
             WDL_UTF8_HookComboBox(GetDlgItem(hwndDlg, IDC_COMBO_PageSurface));
-            
+
             filesystem::path path { string(GetResourcePath()) + "/CSI/Surfaces"};
             
             if (filesystem::exists(path) && filesystem::is_directory(path))
