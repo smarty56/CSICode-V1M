@@ -80,3 +80,4 @@ Windows/VS2005/x64/Release/reaper_csurf_integrator.dll.recipe
 Windows/VS2005/x64/Release/reaper_csurf_integrator.log
 Windows/VS2005/x64/Release/reaper_csurf_integrator.vcxproj.FileListAbsolute.txt
 Windows/VS2005/x64/Release/vc143.pdb
+reaper_csurf_integrator.xcodeproj/project.pbxproj
