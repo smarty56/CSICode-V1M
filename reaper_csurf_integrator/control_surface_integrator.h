@@ -1039,18 +1039,30 @@ private:
     
     void ListenToGoZone(const char *zoneName)
     {
-        if (!strcmp("SelectedTrackSend", zoneName) && listensToSends_)
+        if (!strcmp("SelectedTrackSend", zoneName))
             for (auto &listener : listeners_)
-                listener->GoZone(zoneName);
-        else if (!strcmp("SelectedTrackReceive", zoneName) && listensToReceives_)
+            {
+                if (listener->GetListensToSends())
+                    listener->GoZone(zoneName);
+            }
+        else if (!strcmp("SelectedTrackReceive", zoneName))
             for (auto &listener : listeners_)
-                listener->GoZone(zoneName);
-        else if (!strcmp("SelectedTrackFX", zoneName) && listensToSelectedTrackFX_)
+            {
+                if (listener->GetListensToReceives())
+                    listener->GoZone(zoneName);
+            }
+        else if (!strcmp("SelectedTrackFX", zoneName))
             for (auto &listener : listeners_)
-                listener->GoZone(zoneName);
-        else if (!strcmp("SelectedTrackFXMenu", zoneName) && listensToFXMenu_)
+            {
+                if (listener->GetListensToSelectedTrackFX())
+                    listener->GoZone(zoneName);
+            }
+        else if (!strcmp("SelectedTrackFXMenu", zoneName))
             for (auto &listener : listeners_)
-                listener->GoZone(zoneName);
+            {
+                if (listener->GetListensToFXMenu())
+                    listener->GoZone(zoneName);
+            }
         else
             GoZone(zoneName);
     }
@@ -1063,12 +1075,18 @@ private:
         else if (!strcmp("FocusedFX", zoneToClear))
             for (auto &listener : listeners_)
                 listener->ClearFocusedFX();
-        else if (!strcmp("SelectedTrackFX", zoneToClear) && listensToSelectedTrackFX_)
+        else if (!strcmp("SelectedTrackFX", zoneToClear))
             for (auto &listener : listeners_)
-                listener->ClearSelectedTrackFX();
-        else if (!strcmp("FXSlot", zoneToClear) && listensToFXMenu_)
+            {
+                if (listener->GetListensToSelectedTrackFX())
+                    listener->GoZone(zoneToClear);
+            }
+        else if (!strcmp("FXSlot", zoneToClear))
             for (auto &listener : listeners_)
-                listener->ClearFXSlot();
+            {
+                if (listener->GetListensToFXMenu())
+                    listener->GoZone(zoneToClear);
+            }
     }
     
     void ListenToGoHome()
@@ -1193,6 +1211,11 @@ public:
     void ToggleUseLocalFXSlot() { usesLocalFXSlot_ = ! usesLocalFXSlot_; }
     bool GetToggleUseLocalFXSlot() { return usesLocalFXSlot_; }
 
+    bool GetListensToSends() { return listensToSends_; }
+    bool GetListensToReceives() { return listensToReceives_; }
+    bool GetListensToFXMenu() { return listensToFXMenu_; }
+    bool GetListensToSelectedTrackFX() { return listensToSelectedTrackFX_; }
+    
     int  GetNumChannels();
     
     void PreProcessZones();
