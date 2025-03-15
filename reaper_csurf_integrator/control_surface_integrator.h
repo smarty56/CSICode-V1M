@@ -27,6 +27,7 @@
 #include <sstream>
 #include <iomanip>
 #include <math.h>
+#include <algorithm>
 
 #ifdef _WIN32
 #include "oscpkt.hh"
