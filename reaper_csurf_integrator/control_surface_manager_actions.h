@@ -597,10 +597,7 @@ public:
     {
         if (value == 0.0) return; // ignore button releases
         
-//        context->GetSurface()->GetZoneManager()->SetHoldDelayAmount(value);
-        context->GetSurface()->GetZoneManager()->SetHoldDelayAmount(context->GetIntParam());
-        WindowsDebugOutput("class SetHoldTime: Widget: %s\n", context->GetWidget()->GetName());
-        WindowsDebugOutput("class SetHoldTime: Time:   %d\n", context->GetIntParam());
+        context->GetSurface()->GetZoneManager()->SetHoldDelayAmount(value);
     }
 };
 
