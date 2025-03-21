@@ -43,7 +43,7 @@ else
   CFLAGS += -O2 -DNDEBUG
 endif
 
-CXXFLAGS = $(CFLAGS) -std=c++03
+CXXFLAGS = $(CFLAGS) -std=c++17
 
 RESINTER = $(SRC_PATH)/res.rc_mac_dlg
 RESINTER2 = $(SRC_PATH)/res.rc_mac_menu
