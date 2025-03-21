@@ -85,12 +85,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_WINDLL;%(PreprocessorDefinitions) _CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <PrecompiledHeader>NotUsing</PrecompiledHeader>
-      <ShowIncludes>false</ShowIncludes>
     </ClCompile>
-    <PostBuildEvent>
-      <Command>Copy "Z:\GitHub\CSICode\Windows\reaper_csurf_integrator\x64\Debug\reaper_csurf_integrator.dll" "Z:\Reaper\Reaper(x63)\UserPlugins\reaper_csurf_integrator.dll"</Command>
-    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -109,7 +104,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <WarningLevel>TurnOffAllWarnings</WarningLevel>
+      <WarningLevel>Level3</WarningLevel>
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
@@ -122,9 +117,6 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
     </Link>
-    <PostBuildEvent>
-      <Command>Copy "Z:\GitHub\CSICode\Windows\reaper_csurf_integrator\x64\Release\reaper_csurf_integrator.dll" "Z:\Reaper\Reaper(x63)\UserPlugins\reaper_csurf_integrator.dll"</Command>
-    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\reaper_csurf_integrator\control_surface_integrator.cpp" />

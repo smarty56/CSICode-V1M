@@ -46,15 +46,4 @@ static double panToNormalized(double val)
     return 0.5 * (val + 1.0);
 }
 
-static void WindowsDebugOutput(const char * format, ...)
-{
-    #if defined (_WIN32) && defined (_DEBUG)  
-        char buffer             [2056];
-        va_list args;
-        va_start(args, format);
-        vsprintf(buffer, format, args);
-        va_end(args);
-        OutputDebugString(buffer);
-    #endif
-}
 #endif /* handy_functions_h */
