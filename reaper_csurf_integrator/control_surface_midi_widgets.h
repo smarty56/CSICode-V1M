@@ -2777,41 +2777,33 @@ class MFT_RGB_Midi_FeedbackProcessor : public Midi_FeedbackProcessor
 {
 public:
     virtual ~MFT_RGB_Midi_FeedbackProcessor() {}
-    MFT_RGB_Midi_FeedbackProcessor(CSurfIntegrator* const csi, Midi_ControlSurface* surface, Widget* widget, MIDI_event_ex_t feedback1)
-        : Midi_FeedbackProcessor(csi, surface, widget, feedback1) { }
+    MFT_RGB_Midi_FeedbackProcessor(CSurfIntegrator *const csi, Midi_ControlSurface *surface, Widget *widget, MIDI_event_ex_t feedback1) : Midi_FeedbackProcessor(csi, surface, widget, feedback1) { }
+  
+    virtual const char *GetName() override { return "MFT_RGB_Midi_FeedbackProcessor"; }
 
-    virtual const char* GetName() override { return "MFT_RGB_Midi_FeedbackProcessor"; }
-
-    // Originally, ForceClear() would create a "black" color (all zeros)
-    // and call ForceColorValue() to turn off the LED.
-    // Commenting out the code so that LED is not forced off on load.
     virtual void ForceClear() override
     {
-        // rgba_color color;
-        // ForceColorValue(color);
+        rgba_color color;
+        ForceColorValue(color);
     }
-
-    virtual void SetColorValue(const rgba_color& color) override
+    
+    virtual void SetColorValue(const rgba_color &color) override
     {
         if (color != lastColor_)
             ForceColorValue(color);
     }
 
-    virtual void ForceColorValue(const rgba_color& color) override
+    virtual void ForceColorValue(const rgba_color &color) override
     {
         lastColor_ = color;
-
+        
         if ((color.r == 177 || color.r == 181) && color.g == 31) // this sets the different MFT modes
             SendMidiMessage(color.r, color.g, color.b);
         else
         {
             int colour = GetColorIntFromRGB(color.r, color.g, color.b);
-            // Originally, if the converted MIDI color is 0, it would send a message to turn off the LED.
-            // Commenting this out prevents turning off the LED.
             if (colour == 0)
-            {
-                // SendMidiMessage(midiFeedbackMessage1_.midi_message[0] + 1, midiFeedbackMessage1_.midi_message[1], 17); // turn off led
-            }
+                SendMidiMessage(midiFeedbackMessage1_.midi_message[0] + 1, midiFeedbackMessage1_.midi_message[1], 17); // turn off led
             else
             {
                 SendMidiMessage(midiFeedbackMessage1_.midi_message[0], midiFeedbackMessage1_.midi_message[1], colour); // set color
