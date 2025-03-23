@@ -128,7 +128,6 @@ enum PropertyType {
   D(Background) \
   D(Foreground) \
   D(Feedback) \
-  D(HoldDelay) \
   D(Version) \
   D(SurfaceType) \
   D(SurfaceName) \
@@ -531,6 +530,7 @@ public:
     
     void SetIsValueInverted() { isValueInverted_ = true; }
     void SetIsFeedbackInverted() { isFeedbackInverted_ = true; }
+    void SetHoldDelayAmount(double holdDelayAmount) { holdDelayAmount_ = (DWORD) (holdDelayAmount * 1000.0 + 0.5); } // holdDelayAmount is specified in seconds, holdDelayAmount_ is in milliseconds
     
     void SetAction(Action *action) { action_ = action; RequestUpdate(); }
     void DoAction(double value);
@@ -925,6 +925,8 @@ private:
     
     map<const string, CSIZoneInfo> zoneInfo_;
         
+    double holdDelayAmount_ = 1.0;
+    
     shared_ptr<Zone> learnFocusedFXZone_ = NULL;
 
     unique_ptr<Zone> homeZone_;
@@ -961,7 +963,7 @@ private:
 
     void GoFXSlot(MediaTrack *track, Navigator *navigator, int fxSlot);
     void GoSelectedTrackFX();
-    void GetWidgetNameAndModifiers(const string &line, string &baseWidgetName, int &modifier, bool &isValueInverted, bool &isFeedbackInverted,
+    void GetWidgetNameAndModifiers(const string &line, string &baseWidgetName, int &modifier, bool &isValueInverted, bool &isFeedbackInverted, double &holdDelayAmount,
                                    bool &isDecrease, bool &isIncrease);
     void GetNavigatorsForZone(const char *zoneName, const char *navigatorName, vector<Navigator *> &navigators);
     void LoadZones(vector<unique_ptr<Zone>> &zones, vector<string> &zoneList);
@@ -1196,6 +1198,8 @@ public:
     
     void Initialize();
     
+    void SetHoldDelayAmount(double value) { holdDelayAmount_ = value; }
+
     Navigator *GetNavigatorForTrack(MediaTrack* track);
     Navigator *GetMasterTrackNavigator();
     Navigator *GetSelectedTrackNavigator();
