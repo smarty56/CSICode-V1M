@@ -81,6 +81,8 @@ Windows/VS2005/x64/Release/reaper_csurf_integrator.log
 Windows/VS2005/x64/Release/reaper_csurf_integrator.vcxproj.FileListAbsolute.txt
 Windows/VS2005/x64/Release/vc143.pdb
 reaper_csurf_integrator.xcodeproj/project.pbxproj
+/build/
+build/
 build/XCBuildData/d066e6dcb54cc034c3199253fc8c9f89.xcbuilddata/task-store.msgpack
 build/XCBuildData/d066e6dcb54cc034c3199253fc8c9f89.xcbuilddata/target-graph.txt
 build/XCBuildData/d066e6dcb54cc034c3199253fc8c9f89.xcbuilddata/manifest.json
