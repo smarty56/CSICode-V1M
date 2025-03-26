@@ -1980,14 +1980,14 @@ static int rgbToColor(int r, int g, int b)
     // Hue will be between 0 and 360 to represent the color wheel.
     // Saturation and Value are a percentage (between 0 and 1.0)
     float h, s, v, colorMin, delta;
-    v = std::max(std::max(rf, gf), bf);
+    v = max(max(rf, gf), bf);
 
     // If value is less than this percentage, LCD should be off.
     if (v <= 0.20) {
         return COLOR_WHITE; // This could be OFF, but that would show nothing.
     }
 
-    colorMin = std::min(std::min(rf, gf), bf);
+    colorMin = min(min(rf, gf), bf);
     delta = v - colorMin;
     // Don't need divide by zero check since if value is 0 it will return COLOR_OFF above.
     s = delta / v;
