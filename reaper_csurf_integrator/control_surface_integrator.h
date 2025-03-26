@@ -129,6 +129,7 @@ enum PropertyType {
   D(Foreground) \
   D(Feedback) \
   D(HoldDelay) \
+  D(HoldRepeatInterval) \
   D(Version) \
   D(SurfaceType) \
   D(SurfaceName) \
@@ -479,6 +480,8 @@ private:
     bool isValueInverted_ = false;
     bool isFeedbackInverted_ = false;
     int  holdDelayAmount_ = 0;
+    int  holdRepeatInterval_ = 0;
+    int  lastRepeatTime_ = 0;
     int  delayStartTime_ = 0;
     bool delayStartTimeValid_= false;
     double deferredValue_ = 0.0;

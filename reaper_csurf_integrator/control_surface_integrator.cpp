@@ -21,9 +21,11 @@ extern void WidgetMoved(ZoneManager *zoneManager, Widget *widget, int modifier);
 
 int g_minNumParamSteps = 1;
 int g_maxNumParamSteps = 30;
+
 bool g_surfaceRawInDisplay;
 bool g_surfaceInDisplay;
 bool g_surfaceOutDisplay;
+
 bool g_fxParamsWrite;
 
 void GetPropertiesFromTokens(int start, int finish, const vector<string> &tokens, PropertyList &properties)
@@ -1515,6 +1517,10 @@ ActionContext::ActionContext(CSurfIntegrator *const csi, Action *action, Widget 
     if (holdDelay)
         holdDelayAmount_ = atoi(holdDelay);
 
+    const char* holdRepeatInterval = widgetProperties_.get_prop(PropertyType_HoldRepeatInterval);
+    if (holdRepeatInterval)
+        holdRepeatInterval_ = atoi(holdRepeatInterval);
+
     for (int i = 0; i < (int)(paramsAndProperties).size(); ++i)
         if (paramsAndProperties[i] == "NoFeedback")
             provideFeedback_ = false;
@@ -1652,15 +1658,42 @@ void ActionContext::RunDeferredActions()
                 }
                 else
                     steppedValuesIndex_++;
-                
+
                 DoRangeBoundAction(steppedValues_[steppedValuesIndex_]);
             }
         }
         else
             DoRangeBoundAction(deferredValue_);
 
-        delayStartTimeValid_ = false;
-        deferredValue_ = 0.0;
+
+        if (holdDelayAmount_ != 0 && delayStartTimeValid_ && (GetTickCount() - delayStartTime_) > holdDelayAmount_)
+        {
+            delayStartTimeValid_ = false;
+            deferredValue_ = 0.0;
+        }
+    }
+    
+    if (holdRepeatInterval_ != 0 && (GetTickCount() - lastRepeatTime_  > holdRepeatInterval_))
+    {
+        lastRepeatTime_ = GetTickCount();
+        
+        if (steppedValues_.size() > 0)
+        {
+            if (deferredValue_ != 0.0) // ignore release messages
+            {
+                if (steppedValuesIndex_ == steppedValues_.size() - 1)
+                {
+                    if (steppedValues_[0] < steppedValues_[steppedValuesIndex_]) // GAW -- only wrap if 1st value is lower
+                        steppedValuesIndex_ = 0;
+                }
+                else
+                    steppedValuesIndex_++;
+
+                DoRangeBoundAction(steppedValues_[steppedValuesIndex_]);
+            }
+        }
+        else
+            DoRangeBoundAction(deferredValue_);
     }
 }
 
@@ -1692,11 +1725,11 @@ void ActionContext::UpdateWidgetValue(double value)
         SetSteppedValueIndex(value);
 
     value = isFeedbackInverted_ == false ? value : 1.0 - value;
-   
+
     widget_->UpdateValue(widgetProperties_, value);
 
     UpdateColorValue(value);
-    
+
     if (supportsTrackColor_)
         UpdateTrackColor();
 }
@@ -1709,25 +1742,31 @@ void ActionContext::UpdateJSFXWidgetSteppedValue(double value)
 
 void ActionContext::UpdateTrackColor()
 {
-    if (MediaTrack *track = zone_->GetNavigator()->GetTrack())
+    if (MediaTrack* track = zone_->GetNavigator()->GetTrack())
     {
         rgba_color color = DAW::GetTrackColor(track);
         widget_->UpdateColorValue(color);
     }
 }
 
-void ActionContext::UpdateWidgetValue(const char *value)
+void ActionContext::UpdateWidgetValue(const char* value)
 {
     widget_->UpdateValue(widgetProperties_, value ? value : "");
 }
 
-void ActionContext::ForceWidgetValue(const char *value)
+void ActionContext::ForceWidgetValue(const char* value)
 {
     widget_->ForceValue(widgetProperties_, value ? value : "");
 }
 
 void ActionContext::DoAction(double value)
 {
+    if (holdRepeatInterval_ != 0)
+    {
+        deferredValue_ = value;
+        lastRepeatTime_ = GetTickCount();
+    }
+
     if (holdDelayAmount_ != 0)
     {
         if (value == 0.0)
@@ -1742,6 +1781,7 @@ void ActionContext::DoAction(double value)
             delayStartTimeValid_ = true;
         }
     }
+
     else
     {
         if (steppedValues_.size() > 0)
@@ -1755,13 +1795,13 @@ void ActionContext::DoAction(double value)
                 }
                 else
                     steppedValuesIndex_++;
-                
+
                 DoRangeBoundAction(steppedValues_[steppedValuesIndex_]);
             }
         }
         else
             DoRangeBoundAction(value);
-    }
+    } 
 }
 
 void ActionContext::DoRelativeAction(double delta)
