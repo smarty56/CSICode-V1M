@@ -1924,7 +1924,9 @@ private:
         return COLOR_INVALID;
     }
 
-    static XTouchColor rgbToColor(int r, int g, int b) {
+/*
+static XTouchColor rgbToColor(int r, int g, int b)
+    {
         bool r_on = r >= 128;
         bool g_on = g >= 128;
         bool b_on = b >= 128;
@@ -1947,7 +1949,23 @@ private:
         if (r > 0 || g > 0 || b > 0)
             return COLOR_WHITE;
         return COLOR_OFF;
-    }
+*/
+
+static int rgbToColor(int r, int g, int b)
+{
+    int surfaceColor = 0;
+
+    if (r == 64 && g == 64 && b == 64)                               surfaceColor = 8 - 1;    // BLACK -> make white
+    else if (r > g && r > b)                                         surfaceColor = 1;    // RED
+    else if (g > r && g > b)                                         surfaceColor = 2;    // GREEN
+    else if (abs(r - g) < 30 && r > b && g > b)                      surfaceColor = 3;    // YELLOW
+    else if (b > r && b > g)                                         surfaceColor = 4;    // BLUE
+    else if (abs(r - b) < 30 && r > g && b > g)                      surfaceColor = 5;    // MAGENTA
+    else if (abs(g - b) < 30 && g > r && b > r)                      surfaceColor = 6;    // CYAN
+    else if (abs(r - g) < 30 && abs(r - b) < 30 && abs(g - b) < 30)  surfaceColor = 7;    // WHITE
+
+    return surfaceColor;
+}
         
 public:
     virtual ~XTouchDisplay_Midi_FeedbackProcessor() {}
