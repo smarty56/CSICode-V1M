@@ -1926,6 +1926,10 @@ private:
         return COLOR_INVALID;
     }
 
+    /*
+     * NOTE: Any changes made to rgbToColor here must also be mirrored in class
+     * OSC_X32FeedbackProcessor in control_surface_OSC_widgets.h
+     */
     static int rgbToColor(int r, int g, int b)
     {
         // Doing a RGB to HSV conversion since HSV is better for light
