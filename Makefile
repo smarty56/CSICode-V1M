@@ -37,6 +37,11 @@ ifneq ($(filter arm%,$(ARCH)),)
   CFLAGS += -fsigned-char -marm
 endif
 
+ifeq ($(ARCH), aarch64)
+  CXX = g++               # clang/llvm 14 has a bug on Debian aarch64, so forcing g++
+  CFLAGS += -fsigned-char
+endif
+
 ifdef DEBUG
   CFLAGS += -O0 -g -D_DEBUG -DWDL_CHECK_FOR_NON_UTF8_FOPEN
 else
