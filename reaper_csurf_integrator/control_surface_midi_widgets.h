@@ -1940,7 +1940,7 @@ private:
         v = max(max(rf, gf), bf);
 
         // If value is less than this percentage, LCD should be off.
-        if (v <= 0.20)
+        if (v <= 0.10)
             return COLOR_WHITE; // This could be OFF, but that would show nothing.
 
         colorMin = min(min(rf, gf), bf);
@@ -1949,7 +1949,7 @@ private:
         s = delta / v;
 
         // If saturation is less than this percentage, LCD should be white.
-        if (s <= 0.20)
+        if (s <= 0.10)
             return COLOR_WHITE;
 
         // Now we have a valid color. Figure out the hue and return the closest X-Touch value.
@@ -1969,7 +1969,7 @@ private:
             return COLOR_RED;
         if (h >= 250)
             return COLOR_MAGENTA;
-        if (h >= 220)
+        if (h >= 210)
             return COLOR_BLUE;
         if (h >= 160)
             return COLOR_CYAN;
