@@ -27,6 +27,10 @@ private:
         COLOR_WHITE
     };
 
+    /*
+     * NOTE: Any changes made to rgbToColor here must also be mirrored in class
+     * XTouchDisplay_Midi_FeedbackProcessor in control_surface_midi_widgets.h
+     */
     static int rgbToColor(int r, int g, int b)
     {
         // Doing a RGB to HSV conversion since HSV is better for light
