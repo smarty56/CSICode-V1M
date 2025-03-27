@@ -1926,49 +1926,6 @@ private:
         return COLOR_INVALID;
     }
 
-/*
-static XTouchColor rgbToColor(int r, int g, int b)
-    {
-        bool r_on = r >= 128;
-        bool g_on = g >= 128;
-        bool b_on = b >= 128;
-
-        if (r_on && g_on && b_on)
-            return COLOR_WHITE;
-        if (r_on && g_on && !b_on)
-            return COLOR_YELLOW;
-        if (r_on && !g_on && b_on)
-            return COLOR_MAGENTA;
-        if (!r_on && g_on && b_on)
-            return COLOR_CYAN;
-        if (r_on && !g_on && !b_on)
-            return COLOR_RED;
-        if (!r_on && g_on && !b_on)
-            return COLOR_GREEN;
-        if (!r_on && !g_on && b_on)
-            return COLOR_BLUE;
-        // if any component is not zero, assume white
-        if (r > 0 || g > 0 || b > 0)
-            return COLOR_WHITE;
-        return COLOR_OFF;
-*/
-/*
-static int rgbToColor(int r, int g, int b)
-{
-    int surfaceColor = 0;
-
-    if (r == 64 && g == 64 && b == 64)                               surfaceColor = 8 - 1;    // BLACK -> make white
-    else if (r > g && r > b)                                         surfaceColor = 1;    // RED
-    else if (g > r && g > b)                                         surfaceColor = 2;    // GREEN
-    else if (abs(r - g) < 30 && r > b && g > b)                      surfaceColor = 3;    // YELLOW
-    else if (b > r && b > g)                                         surfaceColor = 4;    // BLUE
-    else if (abs(r - b) < 30 && r > g && b > g)                      surfaceColor = 5;    // MAGENTA
-    else if (abs(g - b) < 30 && g > r && b > r)                      surfaceColor = 6;    // CYAN
-    else if (abs(r - g) < 30 && abs(r - b) < 30 && abs(g - b) < 30)  surfaceColor = 7;    // WHITE
-
-    return surfaceColor;
-}
-*/
 static int rgbToColor(int r, int g, int b)
 {
     // Doing a RGB to HSV conversion since HSV is better for light
@@ -1983,9 +1940,8 @@ static int rgbToColor(int r, int g, int b)
     v = max(max(rf, gf), bf);
 
     // If value is less than this percentage, LCD should be off.
-    if (v <= 0.20) {
+    if (v <= 0.20)
         return COLOR_WHITE; // This could be OFF, but that would show nothing.
-    }
 
     colorMin = min(min(rf, gf), bf);
     delta = v - colorMin;
@@ -1993,23 +1949,20 @@ static int rgbToColor(int r, int g, int b)
     s = delta / v;
 
     // If saturation is less than this percentage, LCD should be white.
-    if (s <= 0.20) {
+    if (s <= 0.20)
         return COLOR_WHITE;
-    }
 
     // Now we have a valid color. Figure out the hue and return the closest X-Touch value.
-    if (rf >= v){
+    if (rf >= v)
         h = (gf - bf) / delta;
-    } else if (gf >= v) {
+    else if (gf >= v)
         h = ((bf - rf) / delta) + 2.0;
-    } else {
+    else
         h = ((rf - gf) / delta) + 4.0;
-    }
 
     h *= 60.0;
-    if (h < 0) {
+    if (h < 0)
         h += 360.0;
-    }
 
     // The numbers represent the hue from 0-360.
     if (h >= 330 || h < 20)
