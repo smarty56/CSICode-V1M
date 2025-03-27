@@ -89,7 +89,6 @@ public:
         {
             lastColor_ = color;
 
-            int surfaceColor = rgbToColor(color.r, color.g, color.b);
             surface_->SendOSCMessage(this, oscAddress_.c_str(), rgbToColor(color.r, color.g, color.b));
         }
     }
