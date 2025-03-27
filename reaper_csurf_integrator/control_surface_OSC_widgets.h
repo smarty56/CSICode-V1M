@@ -14,7 +14,8 @@ class OSC_X32FeedbackProcessor : public OSC_FeedbackProcessor
 {
 private:
 
-    enum XTouchColor {
+    enum X32Color
+    {
         COLOR_INVALID = -1,
         COLOR_OFF = 0,
         COLOR_RED,
@@ -25,19 +26,6 @@ private:
         COLOR_CYAN,
         COLOR_WHITE
     };
-
-    static XTouchColor colorFromString(const char* str)
-    {
-        if (!strcmp(str, "Black"))   return COLOR_OFF;
-        if (!strcmp(str, "Red"))     return COLOR_RED;
-        if (!strcmp(str, "Green"))   return COLOR_GREEN;
-        if (!strcmp(str, "Yellow"))  return COLOR_YELLOW;
-        if (!strcmp(str, "Blue"))    return COLOR_BLUE;
-        if (!strcmp(str, "Magenta")) return COLOR_MAGENTA;
-        if (!strcmp(str, "Cyan"))    return COLOR_CYAN;
-        if (!strcmp(str, "White"))   return COLOR_WHITE;
-        return COLOR_INVALID;
-    }
 
     static int rgbToColor(int r, int g, int b)
     {
@@ -102,8 +90,7 @@ public:
             lastColor_ = color;
 
             int surfaceColor = rgbToColor(color.r, color.g, color.b);
-
-            surface_->SendOSCMessage(this, oscAddress_.c_str(), surfaceColor);
+            surface_->SendOSCMessage(this, oscAddress_.c_str(), rgbToColor(color.r, color.g, color.b));
         }
     }
 };
