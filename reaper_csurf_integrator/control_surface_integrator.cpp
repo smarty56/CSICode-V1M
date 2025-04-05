@@ -147,18 +147,20 @@ static double EnumSteppedValues(int numSteps, int stepNumber)
     return floor(stepNumber / (double)(numSteps - 1)  *100.0 + 0.5)  *0.01;
 }
 
-void GetParamStepsString(string &outputString, int numSteps) // appends to string
+void GetParamStepsString(string& outputString, int numSteps) // appends to string 
 {
+    // When number of steps equals 1, users are typically looking to use a button to reset.
+    // A halfway value (0.5) is chosen as a good reset value instead of the previous 0.1.
     if (numSteps == 1)
     {
-        outputString = "0.1";
+        outputString = "0.5";
     }
     else
     {
         for (int i = 0; i < numSteps; ++i)
         {
             char tmp[128];
-            snprintf(tmp,sizeof(tmp), "%.2f", EnumSteppedValues(numSteps, i));
+            snprintf(tmp, sizeof(tmp), "%.2f", EnumSteppedValues(numSteps, i));
             WDL_remove_trailing_decimal_zeros(tmp, 0);
             lstrcatn(tmp, " ", sizeof(tmp));
             outputString += tmp;
