@@ -41,9 +41,14 @@ public:
     
     virtual void Do(ActionContext *context, double value) override
     {
-        if (context->GetCommandId() == 41743) // ignore refresh all surfaces, it causes a crash -- CSI receives the surface control release message after this but no one is home :)
-            return;
-            
+        int commandID = context->GetCommandId();
+        if  (  commandID == 41743    // ignore "refresh all surfaces", it causes a crash -- CSI receives the surface control release message after this but no one is home :)
+            || commandID == 40023    // ignore "open new project", it causes a crash
+            || commandID == 46000    // ignore "insert track from template, it randomly may cause a crash
+            )
+           return;
+
+
         // used for Increase/Decrease
         if (value < 0 && context->GetRangeMinimum() < 0)
             DAW::SendCommandMessage(context->GetCommandId());
