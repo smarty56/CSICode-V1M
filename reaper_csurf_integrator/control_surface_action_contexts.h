@@ -41,10 +41,12 @@ public:
     
     virtual void Do(ActionContext *context, double value) override
     {
+        // Reaper actions ignored, as they cause crashes
         int commandID = context->GetCommandId();
-        if  (  commandID == 41743    // ignore "refresh all surfaces", it causes a crash -- CSI receives the surface control release message after this but no one is home :)
-            || commandID == 40023    // ignore "open new project", it causes a crash
-            || commandID == 46000    // ignore "insert track from template, it randomly may cause a crash
+        if  (  commandID == 41743    // Refresh all surfaces", CSI receives the surface control release message after this but no one is home :)
+            || commandID == 40023    // Open new project
+            || commandID == 40860    // Close current project tab
+            || commandID == 46000    // Insert track from template
             )
            return;
 
