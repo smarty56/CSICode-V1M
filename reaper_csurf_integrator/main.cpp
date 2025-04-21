@@ -1,8 +1,6 @@
 #define REAPERAPI_IMPLEMENT
 #define REAPERAPI_DECL
 
-#define REAPERAPI_WANT_TrackFX_GetParamNormalized
-#define REAPERAPI_WANT_TrackFX_SetParamNormalized
 #include "reaper_plugin_functions.h"
 #include "resource.h"
 
