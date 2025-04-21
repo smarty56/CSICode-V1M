@@ -7,6 +7,8 @@
 #ifndef control_surface_integrator_Reaper_h
 #define control_surface_integrator_Reaper_h
 
+#define REAPERAPI_WANT_TrackFX_GetParamNormalized
+#define REAPERAPI_WANT_TrackFX_SetParamNormalized
 #include "reaper_plugin_functions.h"
 
 using namespace std;
