@@ -11,6 +11,9 @@
 #define REAPERAPI_WANT_TrackFX_SetParamNormalized
 #include "reaper_plugin_functions.h"
 
+#include <string>
+#include <vector>
+
 using namespace std;
 
 extern HWND g_hwnd;
