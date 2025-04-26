@@ -50,7 +50,7 @@ We kindly ask that contributors follow these guidelines to help keep the project
   - Any relevant zone or syntax information
 
 - **Do not remove project files** without prior discussion.  
-  Project files (such as Visual Studio solutions, WDL components, etc.) are important for cross-platform builds and ongoing development. Please avoid deleting or replacing these files unless the change has been discussed and agreed upon by the team.
+  Project files (such as Visual Studio solutions, WDL components, etc.) are important for cross-platform builds and ongoing development. Please avoid deleting or replacing these files in a PR unless the change has been discussed and agreed upon by the team.
 
 - **PR review process.**  
   Regular CSI contributors will review and approve pull requests to ensure consistency, compatibility, and project integrity.
