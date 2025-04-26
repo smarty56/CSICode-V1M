@@ -44,12 +44,15 @@ We kindly ask that contributors follow these guidelines to help keep the project
 If you encounter a bug or problem with CSI, we recommend first reporting it in the **main CSI thread** on the [REAPER Forum](https://forum.cockos.com/).  
 This allows for community discussion and quick troubleshooting.
 
-If appropriate, feel free to also open an **Issue** here on GitHub to help track and resolve the problem.  
+If community discussions and quick troubleshooting fails to resolve the issue, feel free to open an Issue here on GitHub to help track and resolve the problem.
+
 When submitting an Issue, please provide:
 - A clear description of the problem
 - Steps to reproduce
+- Expected Results
+- Actual Results
 - Surface(s) involved
-- CSI version and REAPER version information
+- CSI version
 - Operating System and Reaper version
 
 ---
