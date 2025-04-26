@@ -8,7 +8,20 @@ CSI is a fully open-source project. Anyone is welcome to explore, contribute to,
 
 ---
 
-## Contributing
+## Resources and Documentation
+
+- 📚 **[CSI Wiki - User Guide and Troubleshooting](https://github.com/FunkybotsEvilTwin/CSIUserGuide/wiki)**  
+  The official CSI User Guide with setup instructions, feature documentation, and troubleshooting tips.
+
+- 📦 **[CSI Install Repository](https://github.com/FunkybotsEvilTwin/CSI_Install)**  
+  Contains required installation files, surface definitions, and support scripts needed to run CSI.
+
+- 🧪 **[CSI Experimental Repository](https://github.com/FunkybotsEvilTwin/CSI_Install)**  
+  A place to explore experimental and beta versions of CSI.
+
+---
+
+## Contributing Code
 
 **Contributions are welcome and encouraged!**
 
@@ -44,16 +57,16 @@ We kindly ask that contributors follow these guidelines to help keep the project
 If you encounter a bug or problem with CSI, we recommend first reporting it in the **main CSI thread** on the [REAPER Forum](https://forum.cockos.com/showthread.php?t=183143).  
 This allows for community discussion and quick troubleshooting.
 
-If community discussions and quick troubleshooting fails to resolve the issue, feel free to open an Issue here on GitHub to help track and resolve the problem.
+If community discussions and quick troubleshooting fail to resolve the issue, feel free to open an Issue here on GitHub to help track and resolve the problem.
 
 When submitting an Issue, please provide:
 - A clear description of the problem
 - Steps to reproduce
-- Expected Results
-- Actual Results
+- Expected results
+- Actual results
 - Surface(s) involved
 - CSI version
-- Operating System and Reaper version
+- Operating system and REAPER version
 
 ---
 
@@ -64,6 +77,6 @@ If you have ideas that significantly diverge from the current project goals, you
 
 ---
 
-## Thank you!
+## Thank You!
 
 We appreciate your contributions and interest in helping CSI continue to grow and improve. Your support makes this project possible!
