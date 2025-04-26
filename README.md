@@ -28,7 +28,8 @@ CSI is a fully open-source project. Anyone is welcome to explore, contribute to,
 We kindly ask that contributors follow these guidelines to help keep the project organized and moving forward smoothly:
 
 - **Introduce yourself!**  
-  Feel free to reach out to the team before beginning work. This helps avoid conflicts with project goals or other contributors who may already be working on related tasks.
+  Feel free to reach out to the team before beginning work — either by posting in the **main CSI thread** on the [REAPER Forum](https://forum.cockos.com/showthread.php?t=183143) or by sending a private message to `funkybot` on the forum.  
+  Contacting us helps avoid conflicts with project goals or other contributors who may already be working on related tasks.
 
 - **Align with project goals.**  
   Before making major changes, please check in to make sure your ideas fit with the long-term direction of the project.
