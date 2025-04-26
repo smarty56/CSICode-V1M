@@ -2,7 +2,7 @@
 
 Welcome to the primary code repository for the **CSI (Control Surface Integrator)** project!
 
-CSI is a powerful and flexible system for integrating a wide range of hardware control surfaces with [REAPER](https://www.reaper.fm/), providing advanced mapping, feedback, and workflow customization capabilities. Whether you're using a basic MIDI controller or a complex multi-surface studio setup, CSI enables deep control over your DAW environment.
+CSI is a powerful and flexible system for integrating a wide range of hardware control surfaces with [REAPER](https://www.reaper.fm/), providing advanced mapping, feedback, and workflow customization capabilities. Whether you're using a basic MIDI controller or a complex multi-surface studio setup including MIDI and OSC devices, CSI enables deep control over your DAW environment.
 
 CSI is a fully open-source project. Anyone is welcome to explore, contribute to, or fork the codebase to create customized builds that meet their specific needs.
 
@@ -23,7 +23,7 @@ CSI is a fully open-source project. Anyone is welcome to explore, contribute to,
 
 ## Contributing Code
 
-**Contributions are welcome and encouraged!**
+**Code contributions are welcome and encouraged!**
 
 We kindly ask that contributors follow these guidelines to help keep the project organized and moving forward smoothly:
 
@@ -32,6 +32,10 @@ We kindly ask that contributors follow these guidelines to help keep the project
 
 - **Align with project goals.**  
   Before making major changes, please check in to make sure your ideas fit with the long-term direction of the project.
+
+- **Issues list.**  
+  If you see an open Issue you would like to tackle, please post a quick comment calling "dibs" before you start working.  
+  This helps avoid duplicate efforts where multiple contributors work on the same thing.
 
 - **Keep Pull Requests (PRs) focused and small.**  
   PRs should ideally cover a **single feature or fix**.  
@@ -72,7 +76,7 @@ When submitting an Issue, please provide:
 
 ## Forks and Custom Versions
 
-Because CSI is open source, anyone is free to clone this repository and create their own builds incorporating any changes, large or small.  
+Because CSI is open source, anyone is free to clone this repository and create their own builds incorporating any changes, large or small.
 
 If you have ideas that significantly diverge from the current project goals, you're welcome to maintain your own fork!
 
