@@ -73,6 +73,7 @@ When submitting an Issue, please provide:
 ## Forks and Custom Versions
 
 Because CSI is open source, anyone is free to clone this repository and create their own builds incorporating any changes, large or small.  
+
 If you have ideas that significantly diverge from the current project goals, you're welcome to maintain your own fork!
 
 ---
