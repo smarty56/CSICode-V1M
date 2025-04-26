@@ -2099,6 +2099,8 @@ void Zone::Deactivate()
 {    
     for (auto &widget : widgets_)
     {
+        if (!isActive_)
+            return;
         for (auto &actionContext : GetActionContexts(widget))
         {
             actionContext->UpdateWidgetValue(0.0);
