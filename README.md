@@ -15,7 +15,10 @@ CSI is a fully open-source project. Anyone is welcome to explore, contribute to,
 We kindly ask that contributors follow these guidelines to help keep the project organized and moving forward smoothly:
 
 - **Introduce yourself!**  
-  We encourage potential contributors to reach out to the team before beginning work. This helps avoid conflicts with project goals or other contributors who may already be working on related tasks.
+  Feel free to reach out to the team before beginning work. This helps avoid conflicts with project goals or other contributors who may already be working on related tasks.
+
+- **Align with project goals.**  
+  Before making major changes, please check in to make sure your ideas fit with the long-term direction of the project.
 
 - **Keep Pull Requests (PRs) focused and small.**  
   PRs should ideally cover a **single feature or fix**.  
@@ -29,17 +32,35 @@ We kindly ask that contributors follow these guidelines to help keep the project
   - Any relevant zone or syntax information
 
 - **Do not remove project files** without prior discussion.  
-  Project files (such as Visual Studio solutions, WDL components, etc.) are important for cross-platform builds and ongoing development. Please avoid deleting or replacing these files unless the change has been discussed and agreed upon by the team. We will eventually look to simplify the build process, but for now, have a good workflow with manual builds.
+  Project files (such as Visual Studio solutions, WDL components, etc.) are important for cross-platform builds and ongoing development. Please avoid deleting or replacing these files unless the change has been discussed and agreed upon by the team.
 
 - **PR review process.**  
   Regular CSI contributors will review and approve pull requests to ensure consistency, compatibility, and project integrity.
 
 ---
 
+## Issue Reporting
+
+If you encounter a bug or problem with CSI, we recommend first reporting it in the **main CSI thread** on the [REAPER Forum](https://forum.cockos.com/).  
+This allows for community discussion and quick troubleshooting.
+
+If appropriate, feel free to also open an **Issue** here on GitHub to help track and resolve the problem.  
+When submitting an Issue, please provide:
+- A clear description of the problem
+- Steps to reproduce
+- Surface(s) involved
+- CSI version and REAPER version information
+- Operating System and Reaper version
+
+---
+
 ## Forks and Custom Versions
+
 Because CSI is open source, anyone is free to clone this repository and create their own builds incorporating any changes, large or small.  
+If you have ideas that significantly diverge from the current project goals, you're welcome to maintain your own fork!
 
 ---
 
 ## Thank you!
+
 We appreciate your contributions and interest in helping CSI continue to grow and improve. Your support makes this project possible!
