@@ -4043,6 +4043,8 @@ public:
         // We want to stop polling
         shouldRun_ = false;
         
+        ResetWidgets();
+
         ShutdownLearn();
     }
     
