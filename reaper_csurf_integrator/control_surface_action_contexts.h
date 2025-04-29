@@ -49,6 +49,7 @@ public:
         int commandID = context->GetCommandId();
         if  (  commandID == 41743    // Refresh all surfaces", CSI receives the surface control release message after this but no one is home :)
             || commandID == 40023    // Open new project
+            || commandID == 40025	 // Open project
             || commandID == 40860    // Close current project tab
             || commandID == 46000    // Insert track from template
             )
