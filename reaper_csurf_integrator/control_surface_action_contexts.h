@@ -51,6 +51,7 @@ public:
     virtual void Do(ActionContext *context, double value) override
     {
         int commandID = context->GetCommandId();
+
         // used for Increase/Decrease
         if (value < 0 && context->GetRangeMinimum() < 0)
             DAW::SendCommandMessage(commandID);

@@ -1123,6 +1123,29 @@ public:
 };
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+class TrackRecordArmDisplay : public Action
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+{
+public:
+    virtual const char* GetName() override { return "TrackRecordArmDisplay"; }
+
+    virtual void RequestUpdate(ActionContext* context) override
+    {
+        if (MediaTrack* track = context->GetTrack())
+        {
+            double state = GetMediaTrackInfo_Value(track, "I_RECARM");
+
+            if (state > 0.5)
+                context->UpdateWidgetValue("ARM");
+            else
+                context->UpdateWidgetValue("");
+        }
+        else
+            context->ClearWidget();
+    }
+};
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 class TrackMute : public Action
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 {
@@ -2393,6 +2416,33 @@ public:
 };
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+class TrackSendStereoMonoDisplay : public Action
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+{
+public:
+    virtual const char *GetName() override { return "TrackSendStereoMonoDisplay"; }
+    
+    virtual void RequestUpdate(ActionContext *context) override
+    {
+        if (MediaTrack *track = context->GetTrack())
+        {
+            MediaTrack *destTrack = (MediaTrack *)GetSetTrackSendInfo(track, 0, context->GetSlotIndex(), "P_DESTTRACK", 0);
+            if (destTrack)
+            {
+                if (GetTrackSendInfo_Value(track, 0, context->GetSlotIndex(), "B_MONO"))
+                    context->UpdateWidgetValue("mono");
+                else
+                    context->UpdateWidgetValue("stereo");
+            }
+            else
+                context->ClearWidget();
+        }
+        else
+            context->ClearWidget();
+    }
+};
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 class TrackSendPrePostDisplay : public Action
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 {
@@ -2527,6 +2577,33 @@ public:
                 
                 char tmp[MEDBUF];
                 context->UpdateWidgetValue(context->GetPanValueString(panVal, "", tmp, sizeof(tmp)));
+            }
+            else
+                context->ClearWidget();
+        }
+        else
+            context->ClearWidget();
+    }
+};
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+class TrackReceiveStereoMonoDisplay : public Action
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+{
+public:
+    virtual const char *GetName() override { return "TrackReceiveStereoMonoDisplay "; }
+    
+    virtual void RequestUpdate(ActionContext *context) override
+    {
+        if (MediaTrack *track = context->GetTrack())
+        {
+            MediaTrack *srcTrack = (MediaTrack *)GetSetTrackSendInfo(track, -1, context->GetSlotIndex(), "P_SRCTRACK", 0);
+            if (srcTrack)
+            {
+                if (GetTrackSendInfo_Value(track, -1, context->GetSlotIndex(), "B_MONO"))
+                    context->UpdateWidgetValue("mono");
+                else
+                    context->UpdateWidgetValue("stereo");
             }
             else
                 context->ClearWidget();
