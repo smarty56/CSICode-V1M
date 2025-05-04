@@ -41,7 +41,7 @@ jobs:
       - name: Upload Build Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: CSI_${{ github.ref_name }}_mac_intel
+          name: CSI_mac_intel
           path: Package
 
   build-macos-arm:
@@ -78,5 +78,5 @@ jobs:
       - name: Upload Build Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: CSI_${{ github.ref_name }}_mac_arm
+          name: CSI_mac_arm
           path: Package
