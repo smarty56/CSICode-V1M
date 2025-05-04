@@ -3863,16 +3863,7 @@ void Midi_ControlSurface::SendMidiMessage(int first, int second, int third)
 {
     surfaceIO_->SendMidiMessage(first, second, third);
     
-    if (g_surfaceOutDisplay)
-    {
-        LogToConsole(256, "%s %02x %02x %02x # Midi_ControlSurface::SendMidiMessage\n", ("OUT->" + name_).c_str(), first, second, third);
-        // if (first == 144, second == 59) {
-        //     // 90 = 144
-        //     // 3b = 59
-        //     // 7f = 127
-        //     LogStackTraceToConsole();
-        // }
-    }
+    if (g_surfaceOutDisplay) LogToConsole(256, "%s %02x %02x %02x # Midi_ControlSurface::SendMidiMessage\n", ("OUT->" + name_).c_str(), first, second, third);
 }
 
  ////////////////////////////////////////////////////////////////////////////////////////////////////////
