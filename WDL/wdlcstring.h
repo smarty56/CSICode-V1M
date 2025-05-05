@@ -429,7 +429,7 @@ extern "C" {
     const size_t blen = strlen(b);
     while (*a)
     {
-      if (!strnicmp(a, b, blen)) return a;
+      if (!_strnicmp(a, b, blen)) return a;
       a++;
     }
     return NULL;
