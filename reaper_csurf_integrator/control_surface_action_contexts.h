@@ -45,29 +45,22 @@ public:
     
     virtual void Do(ActionContext *context, double value) override
     {
+        // Reaper actions ignored, as they cause crashes
         int commandID = context->GetCommandId();
+        if  (  commandID == 41743    // Refresh all surfaces", CSI receives the surface control release message after this but no one is home :)
+            || commandID == 40023    // Open new project
+            || commandID == 40025	 // Open project
+            || commandID == 40860    // Close current project tab
+            || commandID == 46000    // Insert track from template
+            )
+           return;
+
 
         // used for Increase/Decrease
         if (value < 0 && context->GetRangeMinimum() < 0)
-            DAW::SendCommandMessage(commandID);
+            DAW::SendCommandMessage(context->GetCommandId());
         else if (value > 0 && context->GetRangeMinimum() >= 0)
-            DAW::SendCommandMessage(commandID);
-
-        static const int reloadingCommands[] = {
-             REAPER__CONTROL_SURFACE_REFRESH_ALL_SURFACES
-            ,REAPER__FILE_NEW_PROJECT
-            ,REAPER__FILE_OPEN_PROJECT
-            ,REAPER__CLOSE_CURRENT_PROJECT_TAB
-            ,REAPER__TRACK_INSERT_TRACK_FROM_TEMPLATE
-        };
-        static const size_t commandsCount = sizeof(reloadingCommands) / sizeof(int);
-        for (size_t i = 0; i < commandsCount; ++i) {
-            if (reloadingCommands[i] == commandID) {
-                auto commandText = DAW::GetCommandName(commandID);
-                if (g_debugLevel >= DEBUG_LEVEL_NOTICE) LogToConsole(256, "[NOTICE] RELOADING after command '%d' ('%s')\n", commandID, commandText);
-                throw ReloadPluginException(commandText);
-            }
-        }
+            DAW::SendCommandMessage(context->GetCommandId());
     }
 };
 
