@@ -42,7 +42,7 @@ private:
         // Hue will be between 0 and 360 to represent the color wheel.
         // Saturation and Value are a percentage (between 0 and 1.0)
         float h, s, v, colorMin, delta;
-        v = max(max(rf, gf), bf);
+        v = (float) max(max(rf, gf), bf);
 
         // If value is less than this percentage, LCD should be off.
         if (v <= 0.10)

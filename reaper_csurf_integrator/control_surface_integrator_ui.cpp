@@ -154,6 +154,7 @@ struct FXCell
     
     void SetNameWidget(Widget *widget, const char *displayWidgetName, const char *paramName)
     {
+        if (g_debugLevel >= DEBUG_LEVEL_DEBUG) LogToConsole(256, "[DEBUG] SetNameWidget %s %s %s\n", widget->GetName(), displayWidgetName, paramName);
         for (auto displayWidget : displayWidgets)
         {
             if( ! strcmp (displayWidget->GetName(), displayWidgetName))
@@ -538,11 +539,10 @@ static void LoadTemplates(SurfaceFXTemplate *fxTemplate)
             }
         }
     }
-    catch (exception)
+    catch (const std::exception& e)
     {
-        char buffer[250];
-        snprintf(buffer, sizeof(buffer), "Trouble in %s\n", zoneInfo["FXRowLayout"].filePath.c_str());
-        ShowConsoleMsg(buffer);
+        LogToConsole(256, "[ERROR] FAILED to LoadTemplates in %s\n", zoneInfo["FXRowLayout"].filePath.c_str());
+        LogToConsole(2048, "Exception: %s\n", e.what());
     }
 
     try
@@ -605,11 +605,10 @@ static void LoadTemplates(SurfaceFXTemplate *fxTemplate)
             s_pageSurfaceFXLearnLevel = "Level2";
 
     }
-    catch (exception)
+    catch (const std::exception& e)
     {
-        char buffer[250];
-        snprintf(buffer, sizeof(buffer), "Trouble in %s\n", zoneInfo["FXWidgetLayout"].filePath.c_str());
-        ShowConsoleMsg(buffer);
+        LogToConsole(256, "[ERROR] FAILED to LoadTemplates in %s\n", zoneInfo["FXWidgetLayout"].filePath.c_str());
+        LogToConsole(2048, "Exception: %s\n", e.what());
     }
 }
 
@@ -636,11 +635,10 @@ static void WriteBoilerPlate(FILE *fxFile, string &fxBoilerplatePath)
             fprintf(fxFile, "\t%s\n", line.c_str());
         }
     }
-    catch (exception)
+    catch (const std::exception& e)
     {
-        char buffer[250];
-        snprintf(buffer, sizeof(buffer), "Trouble in %s, around line %d\n", fxBoilerplatePath.c_str(), lineNumber);
-        ShowConsoleMsg(buffer);
+        LogToConsole(256, "[ERROR] FAILED to WriteBoilerPlate in %s, around line %d\n", fxBoilerplatePath.c_str(), lineNumber);
+        LogToConsole(2048, "Exception: %s\n", e.what());
     }
 }
 
@@ -855,11 +853,10 @@ static void SaveZone(SurfaceFXTemplate *t)
         
         zoneManager->AddZoneFilePath(s_fxName, info);
     }
-    catch (exception)
+    catch (const std::exception& e)
     {
-        char buffer[250];
-        snprintf(buffer, sizeof(buffer), "Trouble saving %s\n", path);
-        ShowConsoleMsg(buffer);
+        LogToConsole(256, "[ERROR] FAILED to SaveZone %s\n", path);
+        LogToConsole(2048, "Exception: %s\n", e.what());
     }
 }
 
@@ -3013,6 +3010,7 @@ static WDL_DLGRET dlgProcAdvancedSetup(HWND hwndDlg, UINT uMsg, WPARAM wParam, L
                 SendMessage(GetDlgItem(hwndDlg, IDC_LIST_Broadcasters), LB_SETCURSEL, 0, 0);
             }
             
+            SetDlgItemInt(hwndDlg, IDC_EDIT_DebugLevel, g_debugLevel, FALSE);
             CheckDlgButton(hwndDlg, IDC_CHECK_ShowRawInput, g_surfaceRawInDisplay);
             CheckDlgButton(hwndDlg, IDC_CHECK_ShowInput, g_surfaceInDisplay);
             CheckDlgButton(hwndDlg, IDC_CHECK_ShowOutput, g_surfaceOutDisplay);
@@ -3274,6 +3272,10 @@ static WDL_DLGRET dlgProcAdvancedSetup(HWND hwndDlg, UINT uMsg, WPARAM wParam, L
                 case IDOK:
                     if (HIWORD(wParam) == BN_CLICKED)
                     {
+                        BOOL success = FALSE;
+                        int newDebugLevel = GetDlgItemInt(hwndDlg, IDC_EDIT_DebugLevel, &success, FALSE);
+                        if (success)
+                            g_debugLevel = std::clamp(newDebugLevel, 0, 4);
                         g_surfaceRawInDisplay = IsDlgButtonChecked(hwndDlg, IDC_CHECK_ShowRawInput) != 0;
                         g_surfaceInDisplay = IsDlgButtonChecked(hwndDlg, IDC_CHECK_ShowInput) != 0;
                         g_surfaceOutDisplay = IsDlgButtonChecked(hwndDlg, IDC_CHECK_ShowOutput) != 0;
@@ -3620,7 +3622,7 @@ WDL_DLGRET dlgProcMainConfig(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lPar
                                 
                                 if (s_pageIndex >= 0)
                                 {
-                                    for (int i = s_pages[s_pageIndex]->broadcasters.size() - 1; i >= 0; --i)
+                                    for (int i = (int) s_pages[s_pageIndex]->broadcasters.size() - 1; i >= 0; --i)
                                     {
                                         if (s_pages[s_pageIndex]->broadcasters[i]->name == deletedSurface)
                                         {
@@ -3629,13 +3631,13 @@ WDL_DLGRET dlgProcMainConfig(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lPar
                                         }
                                         else
                                         {
-                                            for (int k = s_pages[s_pageIndex]->broadcasters[i]->listeners.size() - 1; k >= 0; --k)
+                                            for (int k = (int) s_pages[s_pageIndex]->broadcasters[i]->listeners.size() - 1; k >= 0; --k)
                                                 if (s_pages[s_pageIndex]->broadcasters[i]->listeners[k]->name == deletedSurface)
                                                      s_pages[s_pageIndex]->broadcasters[i]->listeners.erase(s_pages[s_pageIndex]->broadcasters[i]->listeners.begin() + k);
                                         }
                                     }
                                     
-                                    for (int i = s_pages[s_pageIndex]->surfaces.size() - 1; i >= 0; --i)
+                                    for (int i = (int) s_pages[s_pageIndex]->surfaces.size() - 1; i >= 0; --i)
                                         if ( s_pages[s_pageIndex]->surfaces[i]->pageSurface == deletedSurface)
                                             s_pages[s_pageIndex]->surfaces.erase(s_pages[s_pageIndex]->surfaces.begin() + i);
 
@@ -3741,7 +3743,7 @@ WDL_DLGRET dlgProcMainConfig(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lPar
                     PropertyList pList;
                     vector<string> properties;
                     properties.push_back(line.c_str());
-                    GetPropertiesFromTokens(0, tokens.size(), tokens, pList);
+                    GetPropertiesFromTokens(0, (int) tokens.size(), tokens, pList);
 
                     if (const char *surfaceTypeProp = pList.get_prop(PropertyType_SurfaceType))
                     {
