@@ -535,7 +535,7 @@ private:
     bool provideFeedback_= true;
 
     string m_freeFormText;
-    
+
     PropertyList widgetProperties_;
         
     void UpdateTrackColor();
@@ -581,7 +581,7 @@ public:
     void SetIsFeedbackInverted() { isFeedbackInverted_ = true; }
     void SetHoldDelay(int value) { holdDelayMs_ = value; }
     int GetHoldDelay() { return holdDelayMs_; }
-    
+
     void SetAction(Action *action) { action_ = action; RequestUpdate(); }
     void DoAction(double value);
     void PerformAction(double value);
@@ -884,7 +884,7 @@ protected:
     double lastDoubleValue_ = 0.0;
     string lastStringValue_;
     rgba_color lastColor_;
-    
+
 public:
     FeedbackProcessor(CSurfIntegrator *const csi, Widget *widget) : csi_(csi), widget_(widget) {}
     virtual ~FeedbackProcessor() {}
@@ -897,7 +897,7 @@ public:
     virtual void ForceUpdateTrackColors() {}
     virtual void RunDeferredActions() {}
     virtual void ForceClear() {}
-    
+
     virtual void SetXTouchDisplayColors(const char *colors) {}
     virtual void RestoreXTouchDisplayColors() {}
 
@@ -911,7 +911,7 @@ public:
             ForceValue(properties, value);
         }
     }
-    
+
     virtual void SetValue(const PropertyList &properties, const char * const & value)
     {
         if (lastStringValue_ != value)
@@ -928,17 +928,17 @@ class Midi_FeedbackProcessor : public FeedbackProcessor
 {
 protected:
     Midi_ControlSurface *const surface_;
-    
+
     MIDI_event_ex_t lastMessageSent_;
     MIDI_event_ex_t midiFeedbackMessage1_;
     MIDI_event_ex_t midiFeedbackMessage2_;
-    
+
     Midi_FeedbackProcessor(CSurfIntegrator *const csi, Midi_ControlSurface *surface, Widget *widget) : FeedbackProcessor(csi, widget), surface_(surface) {}
-    
+
     Midi_FeedbackProcessor(CSurfIntegrator *const csi, Midi_ControlSurface *surface, Widget *widget, MIDI_event_ex_t feedback1) : FeedbackProcessor(csi, widget), surface_(surface), midiFeedbackMessage1_(feedback1) {}
-    
+
     Midi_FeedbackProcessor(CSurfIntegrator *const csi, Midi_ControlSurface *surface, Widget *widget, MIDI_event_ex_t feedback1, MIDI_event_ex_t feedback2) : FeedbackProcessor(csi, widget), surface_(surface), midiFeedbackMessage1_(feedback1), midiFeedbackMessage2_(feedback2) {}
-    
+
     void SendMidiSysExMessage(MIDI_event_ex_t *midiMessage);
     void SendMidiMessage(int first, int second, int third);
     void ForceMidiMessage(int first, int second, int third);
@@ -947,7 +947,7 @@ protected:
 public:
     ~Midi_FeedbackProcessor()
     { }
-    
+
     virtual const char *GetName() override { return "Midi_FeedbackProcessor"; }
 };
 
@@ -2996,7 +2996,11 @@ protected:
     int selectedTracksOffset_ = 0;
     vector<MediaTrack *> tracks_;
     vector<MediaTrack *> selectedTracks_;
-    
+
+    bool isFolderViewActive_ = false;
+    int currentFolderTrackID_ = 0; // 0 is for root folder
+    MediaTrack* parentOfCurrentFolderTrack_ = nullptr;
+
     vector<MediaTrack *> vcaTopLeadTracks_;
     MediaTrack           *vcaLeadTrack_ = NULL;
     vector<MediaTrack *> vcaLeadTracks_;
@@ -3007,7 +3011,7 @@ protected:
     vector<MediaTrack *> folderParentTracks_;
     vector<MediaTrack *> folderSpillTracks_;
     map<MediaTrack*, vector<MediaTrack*>> folderDictionary_;
- 
+
     vector<unique_ptr<Navigator>> fixedTrackNavigators_;
     vector<unique_ptr<Navigator>> trackNavigators_;
     unique_ptr<Navigator> masterTrackNavigator_;
@@ -3016,33 +3020,49 @@ protected:
     
     void ForceScrollLink()
     {
-        // Make sure selected track is visble on the control surface
+        // Make sure selected track is visible on the control surface
         MediaTrack *selectedTrack = GetSelectedTrack();
         
         if (selectedTrack != NULL)
         {
+            // Is the selected track already visible
+            // TODO: there is a bug here: if you move a track in the TCP, the track navigators are not updated yet when arriving here:
+            // the scroll doesn't work because the selected track is still in the list and we return just here below
             for (auto &trackNavigator : trackNavigators_)
                 if (selectedTrack == trackNavigator->GetTrack())
                     return;
             
-            for (int i = 1; i <= GetNumTracks(); ++i)
+            int trackOffsetInList = -1; // -1 means not found
+
+            // Find the selected track in the tracks_ list
+            auto it = std::find(tracks_.begin(), tracks_.end(), selectedTrack);
+            if (it != tracks_.end())
+                trackOffsetInList = static_cast<int>(std::distance(tracks_.begin(), it));
+
+            if (trackOffsetInList < 0)
             {
-                if (selectedTrack == GetTrackFromId(i))
-                {
-                    trackOffset_ = i - 1;
-                    break;
-                }
+                // The selected track is not in the current track list because currentFolderTrackID_ is not its parent:
+                MediaTrack* parentTrack = GetParentTrack(selectedTrack);
+                currentFolderTrackID_ = parentTrack ? GetIdFromTrack(parentTrack) : 0;
+                RebuildTracks();
+
+                // Find the selected track in the tracks_ list
+                auto it = std::find(tracks_.begin(), tracks_.end(), selectedTrack);
+                if (it != tracks_.end())
+                    trackOffsetInList = static_cast<int>(std::distance(tracks_.begin(), it));
             }
-            
-            trackOffset_ -= targetScrollLinkChannel_;
-            
-            if (trackOffset_ <  0)
-                trackOffset_ =  0;
-            
-            int top = GetNumTracks() - (int) trackNavigators_.size();
-            
-            if (trackOffset_ >  top)
-                trackOffset_ = top;
+
+            if (trackOffsetInList >= 0)
+            {
+                int trackOffset = currentFolderTrackID_ + trackOffsetInList;
+                int maxOffset = static_cast<int>(tracks_.size() - trackNavigators_.size());
+                if (maxOffset < 0)
+                    maxOffset = 0;
+                maxOffset += currentFolderTrackID_;
+                if (trackOffset > maxOffset)
+                    trackOffset = maxOffset;
+                trackOffset_ = trackOffset;
+            }
         }
     }
     
@@ -3079,7 +3099,30 @@ public:
     {
         return IsTrackVisible(track, followMCP_);
     }
-    
+
+    void ToggleFolderView()
+    {
+        isFolderViewActive_ = !isFolderViewActive_;
+
+        if (isFolderViewActive_)
+        {
+            // Entering folder view: show the root level
+            currentFolderTrackID_ = 0;
+            trackOffset_ = 0;
+        }
+        else
+        {
+            // When in flat mode, currentFolderTrackID_ must be zero
+            // But trackOffset_ is kept
+            currentFolderTrackID_ = 0;
+        }
+    }
+
+    bool GetIsFolderViewActive() const
+    {
+        return isFolderViewActive_;
+    }
+
     void VCAModeActivated()
     {
         currentTrackVCAFolderMode_ = 1;
@@ -3250,13 +3293,13 @@ public:
        
         trackOffset_ += amount;
         
-        if (trackOffset_ <  0)
-            trackOffset_ =  0;
+        if (trackOffset_ < currentFolderTrackID_)
+            trackOffset_ = currentFolderTrackID_;
         
         int top = numTracks - (int) trackNavigators_.size();
         
-        if (trackOffset_ >  top)
-            trackOffset_ = top;
+        if (trackOffset_ > currentFolderTrackID_ + top)
+            trackOffset_ = currentFolderTrackID_ + top;
         
         if (isScrollSynchEnabled_)
         {
@@ -3326,7 +3369,7 @@ public:
         if (selectedTracksOffset_ > top)
             selectedTracksOffset_ = top;
     }
-    
+
     Navigator *GetNavigatorForChannel(int channelNum)
     {
         for (auto &trackNavigator : trackNavigators_)
@@ -3350,11 +3393,19 @@ public:
     }
     
     MediaTrack *GetTrackFromChannel(int channelNumber)
-    {       
+    {
         if (currentTrackVCAFolderMode_ == 0)
         {
-            channelNumber += trackOffset_;
-            
+            if (trackOffset_ < currentFolderTrackID_)
+            {
+                // Just in case, this should never happen
+                currentFolderTrackID_ = 0;
+            }
+
+            // If currentFolderTrackID_ is 0, we are in the root folder (or in flat mode)
+            // If not, we are in a folder: the first displayable track is trackOffset_ + 1, but trackOffset_ is 0-based and currentFolderTrackID_ is 1-based
+            channelNumber += trackOffset_ - currentFolderTrackID_;
+
             if (channelNumber < GetNumTracks() && channelNumber < tracks_.size() && DAW::ValidateTrackPtr(tracks_[channelNumber]))
                 return tracks_[channelNumber];
             else
@@ -3424,6 +3475,24 @@ public:
         return CSurf_TrackToID(track, followMCP_);
     }
     
+    void SetCurrentFolder(MediaTrack* track)
+    {
+        if (track == nullptr)
+            currentFolderTrackID_ = 0;
+        else if (GetMediaTrackInfo_Value(track, "I_FOLDERDEPTH") != 1)
+            return;
+        else
+            currentFolderTrackID_ = CSurf_TrackToID(track, followMCP_);
+
+        // trackOffset is 0-based, currentFolderTrackID_ starts at 1, the track offset points to the first track after the folder track
+        trackOffset_ = currentFolderTrackID_;
+    }
+
+    void ExitCurrentFolder()
+    {
+        SetCurrentFolder(parentOfCurrentFolderTrack_); // parentOfCurrentFolderTrack_ will be updated on track list rebuild
+    }
+
     bool GetIsVCASpilled(MediaTrack *track)
     {
         if (vcaLeadTrack_ == NULL && (DAW::GetTrackGroupMembership(track, "VOLUME_VCA_LEAD") != 0 || DAW::GetTrackGroupMembershipHigh(track, "VOLUME_VCA_LEAD") != 0))
@@ -3536,13 +3605,13 @@ public:
        
     void OnTrackSelection()
     {
-        if (isScrollLinkEnabled_ && tracks_.size() > trackNavigators_.size())
+        if (isScrollLinkEnabled_)
             ForceScrollLink();
     }
     
     void OnTrackListChange()
     {
-        if (isScrollLinkEnabled_ && tracks_.size() > trackNavigators_.size())
+        if (isScrollLinkEnabled_)
             ForceScrollLink();
     }
 
@@ -3880,6 +3949,10 @@ public:
     Navigator *GetMasterTrackNavigator() { return trackNavigationManager_->GetMasterTrackNavigator(); }
     Navigator * GetSelectedTrackNavigator() { return trackNavigationManager_->GetSelectedTrackNavigator(); }
     Navigator * GetFocusedFXNavigator() { return trackNavigationManager_->GetFocusedFXNavigator(); }
+    void ToggleFolderView() { trackNavigationManager_->ToggleFolderView(); }
+    bool GetIsFolderViewActive() { return trackNavigationManager_->GetIsFolderViewActive(); }
+    void SetCurrentFolder(MediaTrack* track) { trackNavigationManager_->SetCurrentFolder(track); }
+    void ExitCurrentFolder() { trackNavigationManager_->ExitCurrentFolder(); }
     void VCAModeActivated() { trackNavigationManager_->VCAModeActivated(); }
     void VCAModeDeactivated() { trackNavigationManager_->VCAModeDeactivated(); }
     void FolderModeActivated() { trackNavigationManager_->FolderModeActivated(); }
@@ -4040,7 +4113,7 @@ public:
         if (pages_.size() > currentPageIndex_ && pages_[currentPageIndex_])
             pages_[currentPageIndex_]->ForceClear();
     }
-    
+
     void Shutdown()
     {
         // GAW -- IMPORTANT
@@ -4087,7 +4160,7 @@ public:
       if (size==8) return (double *)ret;
       return NULL;
     }
-    
+
     void Speak(const char *phrase)
     {
         static void (*osara_outputMessage)(const char *message);
@@ -4122,7 +4195,7 @@ public:
             return actions_["NoAction"].get();
         }
     }
-    
+
     void OnTrackSelection(MediaTrack *track) override
     {
         if (pages_.size() > currentPageIndex_ && pages_[currentPageIndex_])
@@ -4295,7 +4368,7 @@ public:
                 LogStackTraceToConsole();
             }
         }
-        
+
 
         /*
          repeats++;
