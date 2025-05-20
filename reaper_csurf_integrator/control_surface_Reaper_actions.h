@@ -3432,6 +3432,87 @@ public:
 };
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+class ToggleFolderView : public Action
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+{
+public:
+    virtual const char *GetName() override { return "ToggleFolderView"; }
+    
+    virtual void RequestUpdate(ActionContext* context) override
+    {
+        if (context->GetPage()->GetIsFolderViewActive())
+            context->UpdateWidgetValue(1.0);
+        else
+            context->UpdateWidgetValue(0.0);
+    }
+
+    virtual void Do(ActionContext* context, double value) override
+    {
+        if (value == 0.0) return; // ignore button releases
+
+        context->GetPage()->ToggleFolderView();
+    }
+};
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+class TrackEnterFolder : public Action
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+{
+public:
+    virtual const char* GetName() override { return "TrackEnterFolder"; }
+
+    virtual void RequestUpdate(ActionContext* context) override
+    {
+        context->UpdateColorValue(0.0);
+    }
+
+    virtual void Do(ActionContext* context, double value) override
+    {
+        if (value == 0.0) return; // ignore button releases
+
+        if (MediaTrack* track = context->GetTrack())
+        {
+            MediaTrack* trackToSelect = context->GetPage()->SetCurrentFolder(track);
+            if (trackToSelect != nullptr)
+            {
+                SetOnlyTrackSelected(trackToSelect);
+                context->GetPage()->OnTrackSelectionBySurface(trackToSelect);
+            }
+        }
+    }
+};
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+class ExitCurrentFolder : public Action
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+{
+public:
+    virtual const char* GetName() override { return "ExitCurrentFolder"; }
+
+    virtual void RequestUpdate(ActionContext* context) override
+    {
+        context->UpdateColorValue(0.0);
+
+        if (context->GetPage()->IsAtRootFolderLevel())
+            context->UpdateWidgetValue(0.0);
+        else
+            context->UpdateWidgetValue(1.0);
+    }
+
+    virtual void Do(ActionContext* context, double value) override
+    {
+        if (value == 0.0) return; // ignore button releases
+
+        MediaTrack* trackToSelect = context->GetPage()->ExitCurrentFolder();
+        if (trackToSelect != nullptr)
+        {
+            SetOnlyTrackSelected(trackToSelect);
+            context->GetPage()->OnTrackSelectionBySurface(trackToSelect);
+        }
+    }
+};
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 class GlobalAutoModeDisplay : public Action
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 {
