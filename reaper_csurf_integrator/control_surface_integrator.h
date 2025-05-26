@@ -520,7 +520,7 @@ private:
     bool isFeedbackInverted_ = false;
     
     bool isDoublePress_ = false;
-    int doublePressStartTs_ = 0;
+    DWORD doublePressStartTs_ = 0;
 
     int  holdDelayMs_ = 0;
     int  holdRepeatIntervalMs_ = 0;
@@ -586,6 +586,7 @@ public:
     void SetIsValueInverted() { isValueInverted_ = true; }
     void SetIsFeedbackInverted() { isFeedbackInverted_ = true; }
     void SetDoublePress() { isDoublePress_ = true; }
+    bool IsDoublePress() { return isDoublePress_; }
     void SetHoldDelay(int value) { holdDelayMs_ = value; }
     int GetHoldDelay() { return holdDelayMs_; }
 
@@ -980,6 +981,8 @@ protected:
     bool hasBeenUsedByUpdate_ = false;
     
     bool isTwoState_ = false;
+
+    bool hasDoublePressActions_ = false;
     
 public:
     // all Widgets are owned by their ControlSurface!
@@ -1036,6 +1039,10 @@ public:
     void SetXTouchDisplayColors(const char *colors);
     void RestoreXTouchDisplayColors();
     void ForceClear();
+
+    void SetHasDoublePressActions() { hasDoublePressActions_ = true; };
+    bool HasDoublePressActions() { return hasDoublePressActions_; };
+
     void LogInput(double value);
 };
 
@@ -1103,7 +1110,7 @@ private:
 
     void GoFXSlot(MediaTrack *track, Navigator *navigator, int fxSlot);
     void GoSelectedTrackFX();
-    void GetWidgetNameAndModifiers(const string &line, string &baseWidgetName, int &modifier, bool &isValueInverted, bool &isFeedbackInverted, bool &hasHoldModifier, bool &hasDoublePressModifier, bool &isDecrease, bool &isIncrease);
+    void GetWidgetNameAndModifiers(const string &line, string &baseWidgetName, int &modifier, bool &isValueInverted, bool &isFeedbackInverted, bool &hasHoldModifier, bool &HasDoublePressPseudoModifier, bool &isDecrease, bool &isIncrease);
     void GetNavigatorsForZone(const char *zoneName, const char *navigatorName, vector<Navigator *> &navigators);
     void LoadZones(vector<unique_ptr<Zone>> &zones, vector<string> &zoneList);
          
