@@ -1025,6 +1025,7 @@ void CSurfIntegrator::InitActionsDictionary()
     actions_.insert(make_pair("ToggleUseLocalFXSlot", make_unique<ToggleUseLocalFXSlot>()));
     actions_.insert(make_pair("SetLatchTime", make_unique<SetLatchTime>()));
     actions_.insert(make_pair("SetHoldTime", make_unique<SetHoldTime>()));
+    actions_.insert(make_pair("SetDoublePressTime", make_unique<SetDoublePressTime>()));
     actions_.insert(make_pair("ToggleEnableFocusedFXMapping", make_unique<ToggleEnableFocusedFXMapping>()));
     actions_.insert(make_pair("DisableFocusedFXMapping", make_unique<DisableFocusedFXMapping>()));
     actions_.insert(make_pair("ToggleEnableLastTouchedFXParamMapping", make_unique<ToggleEnableLastTouchedFXParamMapping>()));
@@ -1546,6 +1547,11 @@ ActionContext::ActionContext(CSurfIntegrator *const csi, Action *action, Widget 
     if (holdRepeatInterval)
         holdRepeatIntervalMs_ = atoi(holdRepeatInterval);
 
+    const char* runCount = widgetProperties_.get_prop(PropertyType_RunCount);
+    if (runCount)
+        runCount_ = atoi(runCount);
+    if (runCount_ < 1) runCount_ = 1;
+
     for (int i = 0; i < (int)(paramsAndProperties).size(); ++i)
         if (paramsAndProperties[i] == "NoFeedback")
             provideFeedback_ = false;
@@ -1766,8 +1772,19 @@ void ActionContext::LogAction(double value)
 // runs once button pressed/released
 void ActionContext::DoAction(double value)
 {
-    deferredValue_ = (value == ActionContext::BUTTON_RELEASE_MESSAGE_VALUE) ? 0.0 : value;
+    DWORD nowTs = GetTickCount();
     int holdDelayMs = holdDelayMs_ == HOLD_DELAY_INHERIT_VALUE ? this->GetSurface()->GetHoldTime() : holdDelayMs_;
+    deferredValue_ = value;
+    
+    if ((isDoublePress_ || GetWidget()->HasDoublePressActions()) && value != ActionContext::BUTTON_RELEASE_MESSAGE_VALUE) {
+        if (doublePressStartTs_ == 0 || nowTs > doublePressStartTs_ + GetSurface()->GetDoublePressTime()) {
+            doublePressStartTs_ = nowTs;
+            if (isDoublePress_) return; // throttle normal press
+        } else {
+            doublePressStartTs_ = 0;
+            if (!isDoublePress_ && holdDelayMs == 0) return; // block normal press inside double-press window
+        }
+    }
 
     if (holdRepeatIntervalMs_ > 0) {
         if (value == ActionContext::BUTTON_RELEASE_MESSAGE_VALUE) {
@@ -1775,7 +1792,7 @@ void ActionContext::DoAction(double value)
         } else {
             if (holdDelayMs == 0) {
                 holdRepeatActive_ = true;
-                lastHoldRepeatTs_ = GetTickCount();
+                lastHoldRepeatTs_ = nowTs;
             }
         }
     }
@@ -1784,7 +1801,7 @@ void ActionContext::DoAction(double value)
             holdActive_ = false;
         } else {
             holdActive_ = true;
-            lastHoldStartTs_ = GetTickCount();
+            lastHoldStartTs_ = nowTs;
         }
     } else {
         PerformAction(value);
@@ -1832,9 +1849,10 @@ void ActionContext::PerformAction(double value)
         }
         else steppedValuesIndex_++;
 
-        DoRangeBoundAction(steppedValues_[steppedValuesIndex_]);
+        for (int i = 0; i < runCount_; ++i)
+            DoRangeBoundAction(steppedValues_[steppedValuesIndex_]);
     }
-    else
+    else for (int i = 0; i < runCount_; ++i)
         DoRangeBoundAction(value);
 }
 
@@ -1870,7 +1888,8 @@ void ActionContext::DoRangeBoundAction(double value)
     if (isValueInverted_)
         value = 1.0 - value;
     
-    action_->Do(this, value);
+    for (int i = 0; i < runCount_; ++i)
+        action_->Do(this, value);
 }
 
 void ActionContext::DoSteppedValueAction(double delta)
@@ -2295,7 +2314,7 @@ void Zone::DoTouch(Widget *widget, const char *widgetName, bool &isUsed, double 
         for (auto &actionContext : GetActionContexts(widget))
             actionContext->DoTouch(value);
     }
-    else
+    else 
     {
         for (auto &includedZone : includedZones_)
             includedZone->DoTouch(widget, widgetName, isUsed, value);
@@ -2600,7 +2619,7 @@ void ZoneManager::PreProcessZoneFile(const string &filePath)
 
 static ModifierManager s_modifierManager(NULL);
 
-void ZoneManager::GetWidgetNameAndModifiers(const string &line, string &baseWidgetName, int &modifier, bool &isValueInverted, bool &isFeedbackInverted, bool &hasHoldModifier, bool &isDecrease, bool &isIncrease)
+void ZoneManager::GetWidgetNameAndModifiers(const string &line, string &baseWidgetName, int &modifier, bool &isValueInverted, bool &isFeedbackInverted, bool &hasHoldModifier, bool & HasDoublePressPseudoModifier, bool &isDecrease, bool &isIncrease)
 {
     vector<string> tokens;
     GetTokens(tokens, line, '+');
@@ -2621,6 +2640,8 @@ void ZoneManager::GetWidgetNameAndModifiers(const string &line, string &baseWidg
                 isFeedbackInverted = true;
             else if (tokens[i] == "Hold")
                 hasHoldModifier = true;
+            else if (tokens[i] == "DoublePress")
+                HasDoublePressPseudoModifier = true;
             else if (tokens[i] == "Decrease")
                 isDecrease = true;
             else if (tokens[i] == "Increase")
@@ -2772,10 +2793,11 @@ void ZoneManager::LoadZoneFile(Zone *zone, const char *filePath, const char *wid
                 bool isValueInverted = false;
                 bool isFeedbackInverted = false;
                 bool hasHoldModifier = false;
+                bool HasDoublePressPseudoModifier = false;
                 bool isDecrease = false;
                 bool isIncrease = false;
                 
-                GetWidgetNameAndModifiers(tokens[0].c_str(), widgetName, modifier, isValueInverted, isFeedbackInverted, hasHoldModifier, isDecrease, isIncrease);
+                GetWidgetNameAndModifiers(tokens[0].c_str(), widgetName, modifier, isValueInverted, isFeedbackInverted, hasHoldModifier, HasDoublePressPseudoModifier, isDecrease, isIncrease);
                 
                 Widget *widget = GetSurface()->GetWidgetByName(widgetName);
                                             
@@ -2803,6 +2825,12 @@ void ZoneManager::LoadZoneFile(Zone *zone, const char *filePath, const char *wid
                 
                 if (hasHoldModifier && context->GetHoldDelay() == 0)
                     context->SetHoldDelay(ActionContext::HOLD_DELAY_INHERIT_VALUE);
+                
+                if (HasDoublePressPseudoModifier)
+                {
+                    context->SetDoublePress();
+                    widget->SetHasDoublePressActions();
+                }
 
                 vector<double> range;
                 
