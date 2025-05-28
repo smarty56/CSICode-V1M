@@ -164,6 +164,7 @@ enum PropertyType {
   D(Feedback) \
   D(HoldDelay) \
   D(HoldRepeatInterval) \
+  D(RunCount) \
   D(Version) \
   D(SurfaceType) \
   D(SurfaceName) \
@@ -517,6 +518,9 @@ private:
     
     bool isValueInverted_ = false;
     bool isFeedbackInverted_ = false;
+    
+    bool isDoublePress_ = false;
+    DWORD doublePressStartTs_ = 0;
 
     int  holdDelayMs_ = 0;
     int  holdRepeatIntervalMs_ = 0;
@@ -525,6 +529,8 @@ private:
     bool holdActive_= false;
     bool holdRepeatActive_ = false;
     double deferredValue_ = 0.0;
+    
+    int  runCount_ = 1;
     
     bool supportsColor_ = false;
     vector<rgba_color> colorValues_;
@@ -579,6 +585,8 @@ public:
     
     void SetIsValueInverted() { isValueInverted_ = true; }
     void SetIsFeedbackInverted() { isFeedbackInverted_ = true; }
+    void SetDoublePress() { isDoublePress_ = true; }
+    bool IsDoublePress() { return isDoublePress_; }
     void SetHoldDelay(int value) { holdDelayMs_ = value; }
     int GetHoldDelay() { return holdDelayMs_; }
 
@@ -973,6 +981,8 @@ protected:
     bool hasBeenUsedByUpdate_ = false;
     
     bool isTwoState_ = false;
+
+    bool hasDoublePressActions_ = false;
     
 public:
     // all Widgets are owned by their ControlSurface!
@@ -1029,6 +1039,10 @@ public:
     void SetXTouchDisplayColors(const char *colors);
     void RestoreXTouchDisplayColors();
     void ForceClear();
+
+    void SetHasDoublePressActions() { hasDoublePressActions_ = true; };
+    bool HasDoublePressActions() { return hasDoublePressActions_; };
+
     void LogInput(double value);
 };
 
@@ -1096,7 +1110,7 @@ private:
 
     void GoFXSlot(MediaTrack *track, Navigator *navigator, int fxSlot);
     void GoSelectedTrackFX();
-    void GetWidgetNameAndModifiers(const string &line, string &baseWidgetName, int &modifier, bool &isValueInverted, bool &isFeedbackInverted, bool &hasHoldModifier, bool &isDecrease, bool &isIncrease);
+    void GetWidgetNameAndModifiers(const string &line, string &baseWidgetName, int &modifier, bool &isValueInverted, bool &isFeedbackInverted, bool &hasHoldModifier, bool &HasDoublePressPseudoModifier, bool &isDecrease, bool &isIncrease);
     void GetNavigatorsForZone(const char *zoneName, const char *navigatorName, vector<Navigator *> &navigators);
     void LoadZones(vector<unique_ptr<Zone>> &zones, vector<string> &zoneList);
          
@@ -2125,7 +2139,8 @@ private:
     bool listensToModifiers_ = false;
         
     int latchTime_ = 100;
-        
+    int doublePressTime_ = 400;
+    
     vector<FeedbackProcessor *> trackColorFeedbackProcessors_; // does not own pointers
     
     vector<ChannelTouch> channelTouches_;
@@ -2302,9 +2317,12 @@ public:
 
     void SetLatchTime(int latchTime) { latchTime_ = latchTime; }
     int GetLatchTime() { return latchTime_; }
-
+    
     void SetHoldTime(int value) { holdTimeMs_ = value; }
     int GetHoldTime() { return holdTimeMs_; }
+    
+    void SetDoublePressTime(int doublePressTime) { doublePressTime_ = doublePressTime; }
+    int GetDoublePressTime() { return doublePressTime_; }
 
     void UpdateCurrentActionContextModifiers()
     {
