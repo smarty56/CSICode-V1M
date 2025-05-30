@@ -195,6 +195,7 @@ enum PropertyType {
   D(SurfaceFolder) \
   D(ZoneFolder) \
   D(FXZoneFolder) \
+  D(MeterMode) \
 
   PropertyType_Unknown = 0, // in this case, string is type=value pair
 #define DEFPT(x) PropertyType_##x ,
@@ -296,6 +297,7 @@ class PropertyList
 #undef CHK
         return PropertyType_Unknown;
     }
+
     static const char *string_from_prop(PropertyType type)
     {
 #define CHK(x) if (type == PropertyType_##x) return #x;
@@ -539,6 +541,8 @@ private:
     bool supportsTrackColor_ = false;
         
     bool provideFeedback_= true;
+
+    char meterMode_[64] = "";
 
     string m_freeFormText;
 
