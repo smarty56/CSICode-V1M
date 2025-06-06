@@ -1892,7 +1892,8 @@ void ActionContext::DoRangeBoundAction(double value)
     if (isValueInverted_)
         value = 1.0 - value;
     
-    for (int i = 0; i < runCount_; ++i)
+    // removed runCount_ loop here to avoid double-loop; PerformAction() now exlusively repeats calls
+    //  for (int i = 0; i < runCount_; ++i)
         action_->Do(this, value);
 }
 
