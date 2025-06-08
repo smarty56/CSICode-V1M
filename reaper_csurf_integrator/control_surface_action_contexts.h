@@ -59,6 +59,8 @@ public:
             ,REAPER__FILE_OPEN_PROJECT
             ,REAPER__CLOSE_CURRENT_PROJECT_TAB
             ,REAPER__TRACK_INSERT_TRACK_FROM_TEMPLATE
+            ,REAPER__SWITCH_TO_NEXT_PROJECT_TAB
+            ,REAPER__SWITCH_TO_PREVIOUS_PROJECT_TAB
         };
         static const size_t commandsCount = sizeof(reloadingCommands) / sizeof(int);
         for (size_t i = 0; i < commandsCount; ++i) {

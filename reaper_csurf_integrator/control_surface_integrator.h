@@ -110,8 +110,10 @@ extern REAPER_PLUGIN_HINSTANCE g_hInst;
 static const int REAPER__CONTROL_SURFACE_REFRESH_ALL_SURFACES = 41743;
 static const int REAPER__FILE_NEW_PROJECT = 40023;
 static const int REAPER__FILE_OPEN_PROJECT = 40025;
-static const int REAPER__CLOSE_CURRENT_PROJECT_TAB = 40860;
 static const int REAPER__TRACK_INSERT_TRACK_FROM_TEMPLATE = 46000;
+static const int REAPER__CLOSE_CURRENT_PROJECT_TAB = 40860;
+static const int REAPER__SWITCH_TO_NEXT_PROJECT_TAB = 40862;
+static const int REAPER__SWITCH_TO_PREVIOUS_PROJECT_TAB = 40861;
 
 static const char * const s_CSIName = "CSI";
 static const char * const s_CSIVersionDisplay = "v7.0";
