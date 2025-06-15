@@ -3349,8 +3349,7 @@ void TrackNavigationManager::RebuildTracks()
             {
                 MediaTrack* t = CSurf_TrackFromID(i, followMCP_);
                 if (!t) continue;
-                int d = (int)GetMediaTrackInfo_Value(t, "I_FOLDERDEPTH");
-                if (d == 1 && GetParentTrack(t) == nullptr)
+                if (GetParentTrack(t) == nullptr)
                     tracks_.push_back(t);
             }
         }
