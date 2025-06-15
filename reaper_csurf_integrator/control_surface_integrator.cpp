@@ -3380,9 +3380,15 @@ void TrackNavigationManager::RebuildTracks()
             {
                 MediaTrack* t = CSurf_TrackFromID(id, followMCP_);
                 if (!t) continue;
-                if (rel == 0 && IsTrackVisible(t, followMCP_)) tracks_.push_back(t);
-                rel += (int)GetMediaTrackInfo_Value(t, "I_FOLDERDEPTH");
-                if (rel < 0) break;
+
+                // include every track while still inside the folder
+                if (rel >= 0 && IsTrackVisible(t, followMCP_))
+                    tracks_.push_back(t);
+
+                rel += static_cast<int>(GetMediaTrackInfo_Value(t, "I_FOLDERDEPTH"));
+
+                if (rel < 0)
+                    break;
             }
         }
     }
@@ -3407,6 +3413,11 @@ void TrackNavigationManager::RebuildTracks()
 
 void TrackNavigationManager::ForceScrollLink()
 {
+
+    // Only auto-bank when in folder view
+    if (!isFolderViewActive_)
+        return;
+
     MediaTrack* sel = GetSelectedTrack();
     if (!sel) return;
 
