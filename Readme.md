@@ -21,11 +21,29 @@ CSI is a fully open-source project. Anyone is welcome to explore, contribute to,
 
 ---
 
+## Issue Reporting
+
+If you encounter a bug or problem with CSI, we recommend first reporting it in the **main CSI thread** on the [REAPER Forum](https://forum.cockos.com/showthread.php?t=183143).  
+This allows for community discussion and quick troubleshooting.
+
+If community discussions and quick troubleshooting fail to resolve the issue, feel free to open an Issue here on GitHub to help track and resolve the problem.
+
+When submitting an Issue, please provide:
+- A clear description of the problem
+- Steps to reproduce
+- Expected results
+- Actual results
+- Surface(s) involved
+- CSI version
+- Operating system and REAPER version
+
+---
+
 ## Contributing Code
 
 **Code contributions are welcome and encouraged!**
 
-We kindly ask that contributors follow these guidelines to help keep the project organized and moving forward smoothly:
+We kindly ask that contributors follow these guidelines, as well as review the CSI Code Style Guide and Authoring Tips in the next section, to help keep the project organized and moving forward smoothly:
 
 - **Introduce yourself!**  
   Feel free to reach out to the team before beginning work — either by posting in the **main CSI thread** on the [REAPER Forum](https://forum.cockos.com/showthread.php?t=183143) or by sending a private message to `funkybot` on the forum.  
@@ -57,21 +75,97 @@ We kindly ask that contributors follow these guidelines to help keep the project
 
 ---
 
-## Issue Reporting
+## CSI Code Style Guide and Authoring Tips
 
-If you encounter a bug or problem with CSI, we recommend first reporting it in the **main CSI thread** on the [REAPER Forum](https://forum.cockos.com/showthread.php?t=183143).  
-This allows for community discussion and quick troubleshooting.
+### 1. Avoid Shorthand  
+Use full, descriptive names instead of abbreviations. This makes code self-documenting and easier to read.
 
-If community discussions and quick troubleshooting fail to resolve the issue, feel free to open an Issue here on GitHub to help track and resolve the problem.
+**Bad:**  
+```
+    #elif CONDITION  
+    // ...  
+    #endif  
 
-When submitting an Issue, please provide:
-- A clear description of the problem
-- Steps to reproduce
-- Expected results
-- Actual results
-- Surface(s) involved
-- CSI version
-- Operating system and REAPER version
+    int oldTracksSize = (int)t;
+```
+
+**Good:**  
+```
+    #else  
+    #if CONDITION  
+    // ...  
+    #endif  
+
+    int oldTracksSize = static_cast<int>(tracks);
+```
+
+### 2. Bracket Usage  
+Place opening braces on their own line and align closing braces vertically. Never leave an opening brace at the end of a line. This helps visually align code in various IDE's.
+
+**Bad:**  
+```
+    class Something : public Action {  
+    public:  
+        const char* GetName() override { return "Something"; }  
+    };
+```
+
+**Good:**  
+```
+    class Something : public Action  
+    {  
+    public:  
+        const char* GetName() override  
+        {  
+            return "Something";  
+        }  
+    };
+```
+
+### 3. Lowercase Variables  
+Variable names should be lowercase and spelled out and use a trailing underscore for private members. 
+
+**Bad:**  
+```
+    if (!T) continue;
+```
+
+**Good:**  
+```
+    if (!track) continue;
+```   
+ 
+ **Bad:**  
+```
+    bool IsInitialized_ = false;
+```
+
+**Good:**  
+```
+    bool isInitialized_ = false;
+```
+
+### 4. Spacing and Comparisons  
+Use consistent spacing around operators and align related expressions to improve readability.
+
+**Not Recommended:**  
+```
+    if (tracks_[i] !=track||colors_[i] !=GetTrackColor(track))
+```
+
+**Preferred:** Adds a few extra spaces to make comparisons a little easier to spot.  
+```
+    if (tracks_[i] != track   ||  colors_[i] != GetTrackColor(track))
+```
+
+### 5. Avoid Timers  
+CSI's Run method is called approximately every 30 ms. Do not introduce timers. Keep all logic within Run.
+
+### 6. Embrace Object-Oriented Design Principles  
+CSI is built around object-oriented design. Before implementing a solution, review how existing classes interact to ensure your changes integrate seamlessly.
+
+### 7. Keep Code Self-Contained  
+When adding things like new actions or feedback processors, encapsulate logic within the class. If you find yourself scattering helper functions across files, reconsider your design or stop and ask for guidance.
 
 ---
 
