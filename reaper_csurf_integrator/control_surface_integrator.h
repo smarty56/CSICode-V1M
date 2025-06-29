@@ -3032,6 +3032,9 @@ protected:
     int vcaTrackOffset_ = 0;
     int folderTrackOffset_ = 0;
     int selectedTracksOffset_ = 0;
+    bool isInitialized_ = false;
+    vector<int> colors_;
+
     vector<MediaTrack *> tracks_;
     vector<MediaTrack *> selectedTracks_;
     
