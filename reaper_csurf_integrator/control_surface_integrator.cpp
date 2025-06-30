@@ -3333,52 +3333,26 @@ void ModifierManager::SetLatchModifier(bool value, Modifiers modifier, int latch
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 // TrackNavigationManager
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 void TrackNavigationManager::RebuildTracks()
 {
-    int oldTracksSize = (int) tracks_.size();
-    bool hasChanged = false;
-  
-    if (oldTracksSize == GetNumTracks())
-    {
-        for (int i = 1; i <= GetNumTracks(); ++i)
-            if (MediaTrack* track = CSurf_TrackFromID(i, followMCP_))
-                if (tracks_[i] != track   || colors_[i] != GetTrackColor(track))
-                {
-                    hasChanged = true;
-                    break;
-                }
-    }
-    if ( ! hasChanged && isInitialized_)
-        return;
-
-    isInitialized_ = true;
+    int oldTracksSize = (int)tracks_.size();
 
     tracks_.clear();
-    colors_.clear();
 
-    
     for (int i = 1; i <= GetNumTracks(); ++i)
     {
-        if (MediaTrack *track = CSurf_TrackFromID(i, followMCP_))
+        if (MediaTrack* track = CSurf_TrackFromID(i, followMCP_))
             if (IsTrackVisible(track, followMCP_))
-            {
                 tracks_.push_back(track);
-                colors_.push_back(GetTrackColor(track));
-            }
     }
-    
+
     if (tracks_.size() < oldTracksSize)
     {
         for (int i = oldTracksSize; i > tracks_.size(); i--)
             page_->ForceClearTrack(i - trackOffset_);
     }
-    
-<<<<<<< Updated upstream
-    page_->ForceUpdateTrackColors();
-=======
-        page_->ForceUpdateTrackColors();
->>>>>>> Stashed changes
+
+    page_->UpdateTrackColors();
 }
 
 void TrackNavigationManager::RebuildSelectedTracks()
@@ -3399,8 +3373,7 @@ void TrackNavigationManager::RebuildSelectedTracks()
             page_->ForceClearTrack(i - selectedTracksOffset_);
     }
     
-    if (selectedTracks_.size() != oldTracksSize)
-        page_->ForceUpdateTrackColors();
+    page_->UpdateTrackColors();
 }
 
 void TrackNavigationManager::AdjustSelectedTrackBank(int amount)
@@ -3477,7 +3450,7 @@ void ControlSurface::ForceClearTrack(int trackNum)
             widget->ForceClear();
 }
 
-void ControlSurface::ForceUpdateTrackColors()
+void ControlSurface::UpdateTrackColors()
 {
     bool hasChanged = false;
 
@@ -3493,7 +3466,7 @@ void ControlSurface::ForceUpdateTrackColors()
                 trackColors_[i].a = trackColor.a;
             }
 
-   // if (hasChanged)
+    if (hasChanged)
         for (auto trackColorFeedbackProcessor : trackColorFeedbackProcessors_)
             trackColorFeedbackProcessor->ForceUpdateTrackColors();
 }

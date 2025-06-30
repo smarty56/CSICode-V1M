@@ -2298,7 +2298,7 @@ public:
         
     virtual void RequestUpdate();
     void ForceClearTrack(int trackNum);
-    void ForceUpdateTrackColors();
+    void UpdateTrackColors();
     void OnTrackSelection(MediaTrack *track);
     virtual void SendOSCMessage(const char *zoneName) {}
     virtual void SendOSCMessage(const char *zoneName, int value) {}
@@ -3812,10 +3812,10 @@ public:
             surface->ForceClearTrack(trackNum);
     }
     
-    void ForceUpdateTrackColors()
+    void UpdateTrackColors()
     {
         for (auto &surface : surfaces_)
-            surface->ForceUpdateTrackColors();
+            surface->UpdateTrackColors();
     }
       
     bool GetTouchState(MediaTrack *track, int touchedControl)
