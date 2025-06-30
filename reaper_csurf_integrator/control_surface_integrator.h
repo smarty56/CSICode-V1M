@@ -2155,7 +2155,8 @@ private:
     int doublePressTime_ = 400;
     
     vector<FeedbackProcessor *> trackColorFeedbackProcessors_; // does not own pointers
-    
+    vector<rgba_color> trackColors_;
+
     vector<ChannelTouch> channelTouches_;
     vector<ChannelToggle> channelToggles_;
 
@@ -2449,10 +2450,17 @@ public:
 
     }
            
-    void AddTrackColorFeedbackProcessor(FeedbackProcessor *feedbackProcessor) // does not own this pointer
+    void AddTrackColorFeedbackProcessor(FeedbackProcessor* feedbackProcessor) // does not own this pointer
     {
         if (feedbackProcessor != NULL)
-        trackColorFeedbackProcessors_.push_back(feedbackProcessor);
+        {
+            trackColorFeedbackProcessors_.push_back(feedbackProcessor);
+
+            for (int i = 0; i < numChannels_; ++i)
+            {
+                trackColors_.push_back(rgba_color());
+            }
+        }
     }
         
     void ForceClear()
