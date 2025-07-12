@@ -1400,6 +1400,7 @@ private:
     double maxDB_;
     int param_;
     bool isClipped_;
+    int lastMidiValue_;
 
 public:
     virtual ~QConProXMasterVUMeter_Midi_FeedbackProcessor() {}
@@ -1466,10 +1467,27 @@ public:
         int midiValue = GetMidiMeterValue(value);
         if (isClipped_) midiValue = 0x0E;  // red clip LED
 
-        WindowsOutputDebugString(
-            "QConProXMasterVUMeter_Midi_FeedbackProcessor: 0xd1, 0x%02x\n",
-            (param_ << 4) | midiValue);
-        SendMidiMessage(0xd1, (param_ << 4) | midiValue, 0);
+        double dbValue = VAL2DB(normalizedToVol(value));
+
+        if (dbValue < -60.0)
+        {
+            if (midiValue != lastMidiValue_)
+            {
+                WindowsOutputDebugString(
+                    "QConProXMasterVUMeter_Midi_FeedbackProcessor: 0xd1, 0x%02x\n",
+                    (param_ << 4) | midiValue);
+                SendMidiMessage(0xd1, (param_ << 4) | midiValue, 0);
+                lastMidiValue_ = midiValue;
+            }
+        }
+        else
+        {
+            WindowsOutputDebugString(
+                "QConProXMasterVUMeter_Midi_FeedbackProcessor: 0xd1, 0x%02x\n",
+                (param_ << 4) | midiValue);
+            SendMidiMessage(0xd1, (param_ << 4) | midiValue, 0);
+            lastMidiValue_ = midiValue;
+        }
     }
 
     virtual void ForceValue(const PropertyList &properties, double value) override
@@ -1500,7 +1518,21 @@ public:
         int midiValue = GetMidiMeterValue(value);
         if (isClipped_) midiValue = 0x0E;  // red clip LED
 
-        ForceMidiMessage(0xd1, (param_ << 4) | midiValue, 0);
+        double dbValue = VAL2DB(normalizedToVol(value));
+
+        if (dbValue < -60.0)
+        {
+            if (midiValue != lastMidiValue_)
+            {
+                ForceMidiMessage(0xd1, (param_ << 4) | midiValue, 0);
+                lastMidiValue_ = midiValue;
+            }
+        }
+        else
+        {
+            ForceMidiMessage(0xd1, (param_ << 4) | midiValue, 0);
+            lastMidiValue_ = midiValue;
+        }
     }
 };
 
@@ -1572,9 +1604,21 @@ public:
         int midiValue = GetMidiValue(properties, value);
         if (isClipped_) midiValue = GetClipLedValue();
 
-        SendMidiMessage(0xD0,
-            (channelNumber_ << 4) | midiValue,
-            0);
+        double dbValue = VAL2DB(normalizedToVol(value));
+
+        if (dbValue < -60.0)
+        {
+            if (midiValue != lastMidiValue_)
+            {
+                SendMidiMessage(0xD0, (channelNumber_ << 4) | midiValue, 0);
+                lastMidiValue_ = midiValue;
+            }
+        }
+        else
+        {
+            SendMidiMessage(0xD0, (channelNumber_ << 4) | midiValue, 0);
+            lastMidiValue_ = midiValue;
+        }
     }
 
     virtual void ForceValue(const PropertyList& properties, double value) override
@@ -1608,9 +1652,21 @@ public:
         int midiValue = GetMidiValue(properties, value);
         if (isClipped_) midiValue = GetClipLedValue();
 
-        ForceMidiMessage(0xD0,
-            (channelNumber_ << 4) | midiValue,
-            0);
+        double dbValue = VAL2DB(normalizedToVol(value));
+
+        if (dbValue < -60.0)
+        {
+            if (midiValue != lastMidiValue_)
+            {
+                ForceMidiMessage(0xD0, (channelNumber_ << 4) | midiValue, 0);
+                lastMidiValue_ = midiValue;
+            }
+        }
+        else
+        {
+            ForceMidiMessage(0xD0, (channelNumber_ << 4) | midiValue, 0);
+            lastMidiValue_ = midiValue;
+        }
     }
 
 protected:
