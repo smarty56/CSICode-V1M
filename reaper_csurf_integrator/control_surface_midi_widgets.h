@@ -1469,18 +1469,7 @@ public:
 
         double dbValue = VAL2DB(normalizedToVol(value));
 
-        if (dbValue < -60.0)
-        {
-            if (midiValue != lastMidiValue_)
-            {
-                WindowsOutputDebugString(
-                    "QConProXMasterVUMeter_Midi_FeedbackProcessor: 0xd1, 0x%02x\n",
-                    (param_ << 4) | midiValue);
-                SendMidiMessage(0xd1, (param_ << 4) | midiValue, 0);
-                lastMidiValue_ = midiValue;
-            }
-        }
-        else
+        if (dbValue >= -60.0 || midiValue != lastMidiValue_)
         {
             WindowsOutputDebugString(
                 "QConProXMasterVUMeter_Midi_FeedbackProcessor: 0xd1, 0x%02x\n",
@@ -1520,15 +1509,7 @@ public:
 
         double dbValue = VAL2DB(normalizedToVol(value));
 
-        if (dbValue < -60.0)
-        {
-            if (midiValue != lastMidiValue_)
-            {
-                ForceMidiMessage(0xd1, (param_ << 4) | midiValue, 0);
-                lastMidiValue_ = midiValue;
-            }
-        }
-        else
+        if (dbValue >= -60.0 || midiValue != lastMidiValue_)
         {
             ForceMidiMessage(0xd1, (param_ << 4) | midiValue, 0);
             lastMidiValue_ = midiValue;
@@ -1606,15 +1587,7 @@ public:
 
         double dbValue = VAL2DB(normalizedToVol(value));
 
-        if (dbValue < -60.0)
-        {
-            if (midiValue != lastMidiValue_)
-            {
-                SendMidiMessage(0xD0, (channelNumber_ << 4) | midiValue, 0);
-                lastMidiValue_ = midiValue;
-            }
-        }
-        else
+        if (dbValue >= -60.0 || midiValue != lastMidiValue_)
         {
             SendMidiMessage(0xD0, (channelNumber_ << 4) | midiValue, 0);
             lastMidiValue_ = midiValue;
@@ -1654,17 +1627,9 @@ public:
 
         double dbValue = VAL2DB(normalizedToVol(value));
 
-        if (dbValue < -60.0)
+        if (dbValue >= -60.0 || midiValue != lastMidiValue_)
         {
-            if (midiValue != lastMidiValue_)
-            {
-                ForceMidiMessage(0xD0, (channelNumber_ << 4) | midiValue, 0);
-                lastMidiValue_ = midiValue;
-            }
-        }
-        else
-        {
-            ForceMidiMessage(0xD0, (channelNumber_ << 4) | midiValue, 0);
+            SendMidiMessage(0xD0, (channelNumber_ << 4) | midiValue, 0);
             lastMidiValue_ = midiValue;
         }
     }
