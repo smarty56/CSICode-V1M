@@ -1587,12 +1587,24 @@ public:
 
         double dbValue = VAL2DB(normalizedToVol(value));
 
-        if (dbValue >= -60.0 || midiValue != lastMidiValue_)
+        if (STRICASECMP(meterMode_.c_str(), "MCU") == 0)
         {
-            SendMidiMessage(0xD0, (channelNumber_ << 4) | midiValue, 0);
-            lastMidiValue_ = midiValue;
+            if (midiValue != lastMidiValue_)
+            {
+                SendMidiMessage(0xD0, (channelNumber_ << 4) | midiValue, 0);
+                lastMidiValue_ = midiValue;
+            }
+        }
+        else
+        {
+            if (dbValue >= -60.0 || midiValue != lastMidiValue_)
+            {
+                SendMidiMessage(0xD0, (channelNumber_ << 4) | midiValue, 0);
+                lastMidiValue_ = midiValue;
+            }
         }
     }
+
 
     virtual void ForceValue(const PropertyList& properties, double value) override
     {
@@ -1627,10 +1639,21 @@ public:
 
         double dbValue = VAL2DB(normalizedToVol(value));
 
-        if (dbValue >= -60.0 || midiValue != lastMidiValue_)
+        if (STRICASECMP(meterMode_.c_str(), "MCU") == 0)
         {
-            SendMidiMessage(0xD0, (channelNumber_ << 4) | midiValue, 0);
-            lastMidiValue_ = midiValue;
+            if (midiValue != lastMidiValue_)
+            {
+                SendMidiMessage(0xD0, (channelNumber_ << 4) | midiValue, 0);
+                lastMidiValue_ = midiValue;
+            }
+        }
+        else
+        {
+            if (dbValue >= -60.0 || midiValue != lastMidiValue_)
+            {
+                SendMidiMessage(0xD0, (channelNumber_ << 4) | midiValue, 0);
+                lastMidiValue_ = midiValue;
+            }
         }
     }
 
