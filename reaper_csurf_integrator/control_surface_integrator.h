@@ -4051,6 +4051,7 @@ private:
     int currentPageIndex_ = 0;
     
     bool shouldRun_ = true;
+    bool isShuttingDown_ = false;
     
     ReaProject* currentProject_ = NULL;
     
@@ -4081,6 +4082,8 @@ public:
     
     ~CSurfIntegrator();
 
+    bool isShuttingDown() const { return isShuttingDown_; }
+
     virtual int Extended(int call, void *parm1, void *parm2, void *parm3) override;
     const char *GetTypeString() override;
     const char *GetDescString() override;
@@ -4094,6 +4097,8 @@ public:
     
     void Shutdown()
     {
+        isShuttingDown_ = true;
+
         // GAW -- IMPORTANT
         
         // We want to stop polling

@@ -2363,7 +2363,7 @@ public:
     
     virtual void ForceUpdateTrackColors() override
     {
-        if (preventUpdateTrackColors_)
+        if (preventUpdateTrackColors_ && ! csi_->isShuttingDown())
             return;
         
         struct
