@@ -706,6 +706,19 @@ void Midi_ControlSurface::ProcessMidiWidget(int &lineNumber, ifstream &surfaceTe
             
             AddTrackColorFeedbackProcessor(widget->GetFeedbackProcessors().back().get());
         }
+        else if ((widgetType == "FB_iCON_V1MDisplayUpper" || widgetType == "FB_iCON_V1MDisplayLower" || widgetType == "FB_iCON_V1XDisplayUpper" || widgetType == "FB_iCON_V1XDisplayLower") && size == 2)
+        {
+            if (widgetType == "FB_iCON_V1MDisplayUpper")
+                widget->GetFeedbackProcessors().push_back(make_unique<iCON_V1MDisplay_Midi_FeedbackProcessor>(csi_, this, widget, 0, 0x14, 0x12, atoi(tokenLines[i][1].c_str())));
+            else if (widgetType == "FB_iCON_V1MDisplayLower")
+                widget->GetFeedbackProcessors().push_back(make_unique<iCON_V1MDisplay_Midi_FeedbackProcessor>(csi_, this, widget, 1, 0x14, 0x12, atoi(tokenLines[i][1].c_str())));
+            else if (widgetType == "FB_iCON_V1XDisplayUpper")
+                widget->GetFeedbackProcessors().push_back(make_unique<iCON_V1MDisplay_Midi_FeedbackProcessor>(csi_, this, widget, 0, 0x15, 0x12, atoi(tokenLines[i][1].c_str())));
+            else if (widgetType == "FB_iCON_V1XDisplayLower")
+                widget->GetFeedbackProcessors().push_back(make_unique<iCON_V1MDisplay_Midi_FeedbackProcessor>(csi_, this, widget, 1, 0x15, 0x12, atoi(tokenLines[i][1].c_str())));
+
+            AddTrackColorFeedbackProcessor(widget->GetFeedbackProcessors().back().get());
+            }
         else if ((widgetType == "FB_C4DisplayUpper" || widgetType == "FB_C4DisplayLower") && size == 3)
         {
             if (widgetType == "FB_C4DisplayUpper")
@@ -1063,9 +1076,12 @@ void CSurfIntegrator::InitActionsDictionary()
     actions_.insert(make_pair("TrackUniqueSelect", make_unique<TrackUniqueSelect>()));
     actions_.insert(make_pair("TrackRangeSelect", make_unique<TrackRangeSelect>()));
     actions_.insert(make_pair("TrackRecordArm", make_unique<TrackRecordArm>()));
+    actions_.insert(make_pair("TracksRecordArm", make_unique<TracksRecordArm>()));
     actions_.insert(make_pair("TrackRecordArmDisplay", make_unique<TrackRecordArmDisplay>()));
     actions_.insert(make_pair("TrackMute", make_unique<TrackMute>()));
+    actions_.insert(make_pair("TracksMute", make_unique<TracksMute>()));
     actions_.insert(make_pair("TrackSolo", make_unique<TrackSolo>()));
+    actions_.insert(make_pair("TracksSolo", make_unique<TracksSolo>()));
     actions_.insert(make_pair("ClearAllSolo", make_unique<ClearAllSolo>()));
     actions_.insert(make_pair("TrackInvertPolarity", make_unique<TrackInvertPolarity>()));
     actions_.insert(make_pair("TrackInvertPolarityDisplay", make_unique<TrackInvertPolarityDisplay>()));
@@ -1552,6 +1568,10 @@ ActionContext::ActionContext(CSurfIntegrator *const csi, Action *action, Widget 
     const char * meterMode  = widgetProperties_.get_prop(PropertyType_MeterMode);
     if (meterMode  &&  strlen(meterMode) > 0)
         strncpy(meterMode_, meterMode, sizeof(meterMode_) - 1);
+
+    const char* clipDetection = widgetProperties_.get_prop(PropertyType_ClipDetection);
+    if (clipDetection && strlen(clipDetection) > 0)
+        strncpy(clipDetection_, clipDetection, sizeof(clipDetection_) - 1);
 
     for (int i = 0; i < (int)(paramsAndProperties).size(); ++i)
         if (paramsAndProperties[i] == "NoFeedback")
@@ -3333,48 +3353,26 @@ void ModifierManager::SetLatchModifier(bool value, Modifiers modifier, int latch
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 // TrackNavigationManager
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 void TrackNavigationManager::RebuildTracks()
 {
-    int oldTracksSize = (int) tracks_.size();
-    bool hasChanged = false;
-  
-    if (oldTracksSize == GetNumTracks())
-    {
-        for (int i = 1; i <= GetNumTracks(); ++i)
-            if (MediaTrack* track = CSurf_TrackFromID(i, followMCP_))
-                if (tracks_[i] != track   || colors_[i] != GetTrackColor(track))
-                {
-                    hasChanged = true;
-                    break;
-                }
-    }
-    if ( ! hasChanged && isInitialized_)
-        return;
-
-    isInitialized_ = true;
+    int oldTracksSize = (int)tracks_.size();
 
     tracks_.clear();
-    colors_.clear();
 
-    
     for (int i = 1; i <= GetNumTracks(); ++i)
     {
-        if (MediaTrack *track = CSurf_TrackFromID(i, followMCP_))
+        if (MediaTrack* track = CSurf_TrackFromID(i, followMCP_))
             if (IsTrackVisible(track, followMCP_))
-            {
                 tracks_.push_back(track);
-                colors_.push_back(GetTrackColor(track));
-            }
     }
-    
+
     if (tracks_.size() < oldTracksSize)
     {
         for (int i = oldTracksSize; i > tracks_.size(); i--)
             page_->ForceClearTrack(i - trackOffset_);
     }
-    
-    page_->ForceUpdateTrackColors();
+
+    page_->UpdateTrackColors();
 }
 
 void TrackNavigationManager::RebuildSelectedTracks()
@@ -3395,8 +3393,7 @@ void TrackNavigationManager::RebuildSelectedTracks()
             page_->ForceClearTrack(i - selectedTracksOffset_);
     }
     
-    if (selectedTracks_.size() != oldTracksSize)
-        page_->ForceUpdateTrackColors();
+    page_->UpdateTrackColors();
 }
 
 void TrackNavigationManager::AdjustSelectedTrackBank(int amount)
@@ -3473,10 +3470,25 @@ void ControlSurface::ForceClearTrack(int trackNum)
             widget->ForceClear();
 }
 
-void ControlSurface::ForceUpdateTrackColors()
+void ControlSurface::UpdateTrackColors()
 {
-    for (auto trackColorFeedbackProcessor : trackColorFeedbackProcessors_)
-        trackColorFeedbackProcessor->ForceUpdateTrackColors();
+    bool hasChanged = false;
+
+    for (int i = 0; i < trackColors_.size(); ++i)
+        if (MediaTrack* track = page_->GetNavigatorForChannel(i + channelOffset_)->GetTrack())
+            if (trackColors_[i] != DAW::GetTrackColor(track))
+            {
+                hasChanged = true;
+                rgba_color trackColor = DAW::GetTrackColor(track);
+                trackColors_[i].r = trackColor.r;
+                trackColors_[i].g = trackColor.g;
+                trackColors_[i].b = trackColor.b;
+                trackColors_[i].a = trackColor.a;
+            }
+
+    if (hasChanged)
+        for (auto trackColorFeedbackProcessor : trackColorFeedbackProcessors_)
+            trackColorFeedbackProcessor->ForceUpdateTrackColors();
 }
 
 rgba_color ControlSurface::GetTrackColorForChannel(int channel)

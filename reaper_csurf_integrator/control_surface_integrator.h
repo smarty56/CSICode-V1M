@@ -205,6 +205,7 @@ enum PropertyType {
   D(ZoneFolder) \
   D(FXZoneFolder) \
   D(MeterMode) \
+  D(ClipDetection) \
 
   PropertyType_Unknown = 0, // in this case, string is type=value pair
 #define DEFPT(x) PropertyType_##x ,
@@ -552,6 +553,7 @@ private:
     bool provideFeedback_= true;
 
     char meterMode_[64] = "";
+    char clipDetection_[64] = "";
 
     string m_freeFormText;
     
@@ -2155,7 +2157,8 @@ private:
     int doublePressTime_ = 400;
     
     vector<FeedbackProcessor *> trackColorFeedbackProcessors_; // does not own pointers
-    
+    vector<rgba_color> trackColors_;
+
     vector<ChannelTouch> channelTouches_;
     vector<ChannelToggle> channelToggles_;
 
@@ -2297,7 +2300,7 @@ public:
         
     virtual void RequestUpdate();
     void ForceClearTrack(int trackNum);
-    void ForceUpdateTrackColors();
+    void UpdateTrackColors();
     void OnTrackSelection(MediaTrack *track);
     virtual void SendOSCMessage(const char *zoneName) {}
     virtual void SendOSCMessage(const char *zoneName, int value) {}
@@ -2449,10 +2452,17 @@ public:
 
     }
            
-    void AddTrackColorFeedbackProcessor(FeedbackProcessor *feedbackProcessor) // does not own this pointer
+    void AddTrackColorFeedbackProcessor(FeedbackProcessor* feedbackProcessor) // does not own this pointer
     {
         if (feedbackProcessor != NULL)
-        trackColorFeedbackProcessors_.push_back(feedbackProcessor);
+        {
+            trackColorFeedbackProcessors_.push_back(feedbackProcessor);
+
+            for (int i = 0; i < numChannels_; ++i)
+            {
+                trackColors_.push_back(rgba_color());
+            }
+        }
     }
         
     void ForceClear()
@@ -3804,10 +3814,10 @@ public:
             surface->ForceClearTrack(trackNum);
     }
     
-    void ForceUpdateTrackColors()
+    void UpdateTrackColors()
     {
         for (auto &surface : surfaces_)
-            surface->ForceUpdateTrackColors();
+            surface->UpdateTrackColors();
     }
       
     bool GetTouchState(MediaTrack *track, int touchedControl)
@@ -4041,6 +4051,7 @@ private:
     int currentPageIndex_ = 0;
     
     bool shouldRun_ = true;
+    bool isShuttingDown_ = false;
     
     ReaProject* currentProject_ = NULL;
     
@@ -4071,6 +4082,8 @@ public:
     
     ~CSurfIntegrator();
 
+    bool isShuttingDown() const { return isShuttingDown_; }
+
     virtual int Extended(int call, void *parm1, void *parm2, void *parm3) override;
     const char *GetTypeString() override;
     const char *GetDescString() override;
@@ -4084,6 +4097,8 @@ public:
     
     void Shutdown()
     {
+        isShuttingDown_ = true;
+
         // GAW -- IMPORTANT
         
         // We want to stop polling
