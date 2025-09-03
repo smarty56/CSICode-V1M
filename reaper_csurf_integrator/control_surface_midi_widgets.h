@@ -2427,7 +2427,7 @@ private:
     vector<rgba_color> currentTrackColors_;
 
 public:
-    virtual ~iCON_V1MDisplay_Midi_FeedbackProcessor() {}
+    virtual ~iCON_V1MDisplay_Midi_FeedbackProcessor() {}        
     iCON_V1MDisplay_Midi_FeedbackProcessor(CSurfIntegrator* const csi, Midi_ControlSurface* surface, Widget* widget, int displayUpperLower, int displayType, int displayRow, int channel) : Midi_FeedbackProcessor(csi, surface, widget), offset_(displayUpperLower * 56), displayType_(displayType), displayRow_(displayRow), channel_(channel)
     {
         preventUpdateTrackColors_ = false;
@@ -2439,7 +2439,7 @@ public:
     }
 
     virtual const char* GetName() override { return "iCON_V1MDisplay_Midi_FeedbackProcessor"; }
-
+    
     virtual void ForceClear() override
     {
         const PropertyList properties;
@@ -2559,6 +2559,206 @@ public:
         }
 
         midiSysExData.evt.midi_message[midiSysExData.evt.size++] = 0xF7; // End SysEx
+
+        SendMidiSysExMessage(&midiSysExData.evt);
+    }
+};
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+class V1MTrackColors_Midi_FeedbackProcessor : public Midi_FeedbackProcessor
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+{
+private:
+    bool preventUpdateTrackColors_;
+    int channel_;
+
+public:
+    virtual ~V1MTrackColors_Midi_FeedbackProcessor() {}
+  
+    V1MTrackColors_Midi_FeedbackProcessor(CSurfIntegrator* const csi, Midi_ControlSurface* surface, Widget* widget) : 
+        Midi_FeedbackProcessor(csi, surface, widget)
+    {
+        //g_debugLevel = DEBUG_LEVEL_DEBUG;
+        preventUpdateTrackColors_ = false;
+    }
+
+    virtual const char* GetName() override { return "V1MTrackColors_Midi_FeedbackProcessor"; }
+
+    //WIP See SelectedTrackFXMenu.zon
+    virtual void SetXTouchDisplayColors(const char* colors) override
+    {
+        if (preventUpdateTrackColors_ == true)
+            return;
+        
+        preventUpdateTrackColors_ = true;
+
+        struct s_color { int r; int g; int b; };
+        map<string, s_color>  rbga_Arr;
+        rbga_Arr["Black"]   = { 0x00, 0x00, 0x00 };
+        rbga_Arr["Red"]     = { 0x7F, 0x00, 0x00 };
+        rbga_Arr["Green"]   = { 0x00, 0x7F, 0x00 };
+        rbga_Arr["Blue"]    = { 0x00, 0x00, 0x7F };
+        rbga_Arr["Yellow"]  = { 0x7F, 0x7F, 0x00 };
+        rbga_Arr["Magenta"] = { 0x7F, 0x00, 0x7F };
+        rbga_Arr["Cyan"]    = { 0x00, 0x7F, 0x7F };
+        rbga_Arr["White"]   = { 0x7F, 0x7F, 0x7F };
+
+        vector<rgba_color> TrackColors;
+        s_color col = rbga_Arr[colors];
+        rgba_color color;
+        color.r = col.r; color.g = col.g; color.b = col.b;
+
+        for (int i = 0; i < surface_->GetNumChannels(); ++i)
+        {
+            TrackColors.push_back(color);
+        }
+        SetTrackColors(TrackColors);
+    }
+
+    virtual void RestoreXTouchDisplayColors() override
+    {
+        if (preventUpdateTrackColors_ == false)
+            return;
+
+        preventUpdateTrackColors_ = false;
+        ForceUpdateTrackColors();
+    }
+
+    //WIP Use it?
+    virtual void ForceClear() override
+    {
+        rgba_color color;
+        ForceColorValue(color);
+    }
+
+    //WIP Use it?
+    virtual void SetColorValue(const rgba_color& color) override
+    {
+        if (color != lastColor_)
+            ForceColorValue(color);
+    }
+
+    //WIP Use it?
+    virtual void ForceColorValue(const rgba_color& color) override
+    {
+    }
+    
+    void SetTrackColors(const vector<rgba_color>& colors) //all 8 track colors are configured at once
+    {
+        struct
+        {
+            MIDI_event_ex_t evt;
+            char data[256]; //this allocates the reuired data
+        } midiSysExData;
+        midiSysExData.evt.frame_offset = 0;
+        midiSysExData.evt.size = 0;
+
+        midiSysExData.evt.midi_message[midiSysExData.evt.size++] = 0xF0; // Start SysEx
+        midiSysExData.evt.midi_message[midiSysExData.evt.size++] = 0x00; // Start of header
+        midiSysExData.evt.midi_message[midiSysExData.evt.size++] = 0x02;
+        midiSysExData.evt.midi_message[midiSysExData.evt.size++] = 0x4E;
+        midiSysExData.evt.midi_message[midiSysExData.evt.size++] = 0x16;
+        midiSysExData.evt.midi_message[midiSysExData.evt.size++] = 0x14; // End of header
+        for (int i = 0; i < surface_->GetNumChannels(); ++i)
+        {
+            midiSysExData.evt.midi_message[midiSysExData.evt.size++] = colors[i].r;             // Add RGB values to SysEx message
+            midiSysExData.evt.midi_message[midiSysExData.evt.size++] = colors[i].g;
+            midiSysExData.evt.midi_message[midiSysExData.evt.size++] = colors[i].b;
+        }
+        midiSysExData.evt.midi_message[midiSysExData.evt.size++] = 0xF7; // End SysEx
+
+        SendMidiSysExMessage(&midiSysExData.evt);
+    }
+    
+    //Working
+    virtual void ForceUpdateTrackColors() override //all 8 tracks colors are configured at once
+    {
+        if (preventUpdateTrackColors_)
+            return;
+
+        vector<rgba_color> TrackColors;
+        for (int i = 0; i < surface_->GetNumChannels(); ++i)
+        {
+            rgba_color color = surface_->GetTrackColorForChannel(i);
+            color.r = (color.r >> 1) & 0x7F; //adjustTo7bit(color.r);
+            color.g = (color.g >> 1) & 0x7F; //adjustTo7bit(color.g);
+            color.b = (color.b >> 1) & 0x7F; //adjustTo7bit(color.b);
+            color.b = static_cast<int>(color.b * (0.70f + (0.30f * color.g / 127.0f))) & 0x7F; // Apply the blue correction for better color representation b = b * (0.70 + (0.30 * (g / 128)))
+            TrackColors.push_back(color);
+        }
+        SetTrackColors(TrackColors);
+    }
+};
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+class V1MDisplay_Midi_FeedbackProcessor : public Midi_FeedbackProcessor // Linked to widgets "FB_V1MDisplay1Upper" "FB_V1MDisplay1Lower" "FB_V1MDisplay2Upper" "FB_V1MDisplay2Lower"" Kev Smart
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+{
+private:
+    int sysExByte1_;
+    int sysExByte2_;
+    int offset_;
+    int displayType_;
+    int displayRow_;
+    int channel_;
+    string lastStringSent_;
+
+public:
+    virtual ~V1MDisplay_Midi_FeedbackProcessor() {}
+    V1MDisplay_Midi_FeedbackProcessor(CSurfIntegrator* const csi, Midi_ControlSurface* surface, Widget* widget, int displayUpperLower, int displayType, int displayRow, int channel, int sysExByte1, int sysExByte2) :
+        Midi_FeedbackProcessor(csi, surface, widget),
+        offset_(displayUpperLower * 56),
+        displayType_(displayType),
+        displayRow_(displayRow),
+        channel_(channel),
+        sysExByte1_(sysExByte1),
+        sysExByte2_(sysExByte2) {}
+
+    virtual const char* GetName() override { return "V1MDisplay_Midi_FeedbackProcessor"; }
+
+    virtual void ForceClear() override
+    {
+        const PropertyList properties;
+        ForceValue(properties, "");
+    }
+
+    virtual void SetValue(const PropertyList& properties, const char* const& inputText) override
+    {
+        if (strcmp(inputText, lastStringSent_.c_str())) // changes since last send
+            ForceValue(properties, inputText);
+    }
+
+    virtual void ForceValue(const PropertyList& properties, const char* const& inputText) override
+    {
+        lastStringSent_ = inputText;
+
+        char tmp[MEDBUF];
+        const char* text = GetWidget()->GetSurface()->GetRestrictedLengthText(inputText, tmp, sizeof(tmp));
+
+        if (!strcmp(text, "-150.00")) text = "-Inf";
+
+        struct
+        {
+            MIDI_event_ex_t evt;
+            char data[256];
+        } midiSysExData;
+        midiSysExData.evt.frame_offset = 0;
+        midiSysExData.evt.size = 0;
+        midiSysExData.evt.midi_message[midiSysExData.evt.size++] = 0xF0;
+        midiSysExData.evt.midi_message[midiSysExData.evt.size++] = 0x00;
+
+        midiSysExData.evt.midi_message[midiSysExData.evt.size++] = sysExByte1_;
+        midiSysExData.evt.midi_message[midiSysExData.evt.size++] = sysExByte2_;
+        midiSysExData.evt.midi_message[midiSysExData.evt.size++] = displayType_;
+        midiSysExData.evt.midi_message[midiSysExData.evt.size++] = displayRow_;
+
+        midiSysExData.evt.midi_message[midiSysExData.evt.size++] = channel_ * 7 + offset_;
+
+        int cnt = 0;
+        while (cnt++ < 7)
+            midiSysExData.evt.midi_message[midiSysExData.evt.size++] = *text ? *text++ : ' ';
+
+        midiSysExData.evt.midi_message[midiSysExData.evt.size++] = 0xF7;
 
         SendMidiSysExMessage(&midiSysExData.evt);
     }
