@@ -719,6 +719,24 @@ void Midi_ControlSurface::ProcessMidiWidget(int &lineNumber, ifstream &surfaceTe
 
             AddTrackColorFeedbackProcessor(widget->GetFeedbackProcessors().back().get());
             }
+
+        else if (widgetType == "FB_V1MTrackColors")
+        {
+            widget->GetFeedbackProcessors().push_back(make_unique<V1MTrackColors_Midi_FeedbackProcessor>(csi_, this, widget));
+            AddTrackColorFeedbackProcessor(widget->GetFeedbackProcessors().back().get());
+            }
+        else if ((widgetType == "FB_V1MDisplay1Upper" || widgetType == "FB_V1MDisplay1Lower" || widgetType == "FB_V1MDisplay2Upper" || widgetType == "FB_V1MDisplay2Lower") && size == 2) //Kev Smart
+        {
+            if (widgetType == "FB_V1MDisplay1Upper")
+                widget->GetFeedbackProcessors().push_back(make_unique<V1MDisplay_Midi_FeedbackProcessor>(csi_, this, widget, 1, 0x14, 0x12, atoi(tokenLines[i][1].c_str()), 0x00, 0x66));
+            else if (widgetType == "FB_V1MDisplay1Lower")
+                widget->GetFeedbackProcessors().push_back(make_unique<V1MDisplay_Midi_FeedbackProcessor>(csi_, this, widget, 0, 0x14, 0x12, atoi(tokenLines[i][1].c_str()), 0x00, 0x66));
+            else if (widgetType == "FB_V1MDisplay2Upper")
+                widget->GetFeedbackProcessors().push_back(make_unique<V1MDisplay_Midi_FeedbackProcessor>(csi_, this, widget, 1, 0x15, 0x13, atoi(tokenLines[i][1].c_str()), 0x02, 0x4e));
+            else if (widgetType == "FB_V1MDisplay2Lower")
+                widget->GetFeedbackProcessors().push_back(make_unique<V1MDisplay_Midi_FeedbackProcessor>(csi_, this, widget, 0, 0x15, 0x13, atoi(tokenLines[i][1].c_str()), 0x02, 0x4e));
+        }
+
         else if ((widgetType == "FB_C4DisplayUpper" || widgetType == "FB_C4DisplayLower") && size == 3)
         {
             if (widgetType == "FB_C4DisplayUpper")
