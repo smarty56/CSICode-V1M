@@ -2564,6 +2564,206 @@ public:
     }
 };
 
+class V1MVUMeter_Midi_FeedbackProcessor : public Midi_FeedbackProcessor  // Linked to widget "FB_V1MVUMeter" Kev Smart 
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+{
+protected:
+    int displayType_;
+    int channelNumber_;
+    int currentMidiValue_;
+    bool isClipOn_;
+
+    int table[62];
+    int newledValue_;
+    int oldledValue_;
+
+public:
+    virtual ~V1MVUMeter_Midi_FeedbackProcessor() {}
+    V1MVUMeter_Midi_FeedbackProcessor(CSurfIntegrator* const csi, Midi_ControlSurface* surface, Widget* widget, int displayType, int channelNumber) : Midi_FeedbackProcessor(csi, surface, widget), displayType_(displayType), channelNumber_(channelNumber)
+    {
+        //currentMidiValue_ = 0;
+        isClipOn_ = false;
+
+        int newledValue_ = 0x00;
+        int oldledValue_ = 0x00;
+
+        int v = 0x0E;
+        for (int i = 0; i < 62; i++)
+        {
+            table[i] = v;
+            if (i > 0) v = 0x0B;
+            if (i > 3) v = 0x0A;
+            if (i > 6) v = 0x09;
+            if (i > 9) v = 0x08;
+            if (i > 12) v = 0x07;
+            if (i > 18) v = 0x06;
+            if (i > 24) v = 0x05;
+            if (i > 30) v = 0x04;
+            if (i > 36) v = 0x03;
+            if (i > 42) v = 0x02;
+            if (i > 48) v = 0x01;
+            if (i > 60) v = 0x00;
+            
+        }
+    }
+
+    virtual const char* GetName() override { return "V1MVUMeter_Midi_FeedbackProcessor"; }
+
+    virtual void ForceClear() override
+    {
+        const PropertyList properties;
+        ForceValue(properties, 0.0);
+    }
+
+    int UpdateMidiValue(const PropertyList& properties, double v)
+    {
+        double db = SLIDER2DB(v * 1000.0);
+        if(db<-60.0)
+            newledValue_ = 0x00;
+        else if(db > 0.00)
+            newledValue_ = 0x0E;
+        else
+        {
+            int value = (int)(ceil(abs(db)));
+            newledValue_ = table[value];
+        }
+
+        if (newledValue_ || newledValue_ != oldledValue_)
+        {
+            oldledValue_ = newledValue_;
+            return true;
+        }
+        return false;
+
+
+
+        return false;
+
+        //    newledValue_ = 0x00;
+        //    if (db > -60) { newledValue_ = 0x01; break; }
+        //    if (db > -48) { newledValue_ = 0x02; break; }
+        //    if (db > -42) { newledValue_ = 0x03; break; }
+        //    if (db > -36) { newledValue_ = 0x04; break; }
+        //    if (db > -30) { newledValue_ = 0x05; break; }
+        //    if (db > -24) { newledValue_ = 0x06; break; }
+        //    if (db > -18) { newledValue_ = 0x07; break; }
+        //    if (db > -12) { newledValue_ = 0x08; break; }
+        //    if (db > -9) { newledValue_ = 0x09; break; }
+        //    if (db > -6) { newledValue_ = 0x0A; return true; }
+        //    if (db > -3) { newledValue_ = 0x0B; return true; }
+        //    if (db > 0) { newledValue_ = 0x0E; return true; }
+        //}
+
+        //if (newledValue_ || newledValue_ != oldledValue_)
+        //{
+        //    oldledValue_ = newledValue_;
+        //    return true;
+        //}
+        //return false;
+
+        
+
+
+
+        //double   dbValue = VAL2DB(normalizedToVol(value));
+        //int newMidiValue = GetMidiValue(properties, dbValue);
+        //if (dbValue >= -60.0 || newMidiValue != currentMidiValue_)
+        //{
+        //    currentMidiValue_ = newMidiValue;
+        //    return true;
+        //}
+        //return false;
+    }
+
+    virtual void SetValue(const PropertyList& properties, double value) override
+    {
+        if (UpdateMidiValue(properties, value))
+        {
+            //SendMidiMessage(0xd0, (channelNumber_ << 4) | currentMidiValue_, 0);
+            SendMidiMessage(0xd0, (channelNumber_ << 4) | newledValue_, 0);
+        }
+    }
+
+    virtual void ForceValue(const PropertyList& properties, double value) override
+    {
+        UpdateMidiValue(properties, value);
+        ForceMidiMessage(0xd0, (channelNumber_ << 4) | newledValue_, 0);
+    }
+
+    //int GetMidiValue(const PropertyList& properties, double dbValue)
+    //{
+    //    int newMidiValue = 0x00;
+    //    if (dbValue >= -60.1 && dbValue < -48.1)		newMidiValue = 0x01; // LED 1 Green  (–60 dB)
+    //    else if (dbValue >= -48.1 && dbValue < -42.1)  	newMidiValue = 0x02; // LED 2 Green  (–48 dB)
+    //    else if (dbValue >= -42.1 && dbValue < -36.1)  	newMidiValue = 0x03; // LED 3 Green  (–42 dB)
+    //    else if (dbValue >= -36.1 && dbValue < -30.1)  	newMidiValue = 0x04; // LED 4 Green  (–36 dB)
+    //    else if (dbValue >= -30.1 && dbValue < -24.1)  	newMidiValue = 0x05; // LED 5 Green  (–30 dB)
+    //    else if (dbValue >= -24.1 && dbValue < -18.1)  	newMidiValue = 0x06; // LED 6 Green  (–24 dB)
+    //    else if (dbValue >= -18.1 && dbValue < -12.1)  	newMidiValue = 0x07; // LED 7 Green  (–18 dB)
+    //    else if (dbValue >= -12.1 && dbValue < -9.1)  	newMidiValue = 0x08; // LED 8 Orange (–12 dB)
+    //    else if (dbValue >= -9.1 && dbValue < -6.1)  	newMidiValue = 0x09; // LED 9 Orange (–9 dB)
+    //    else if (dbValue >= -6.1 && dbValue < -3.1)  	newMidiValue = 0x0A; // LED 10 Orange (–6 dB)
+    //    else if (dbValue >= -3.1 && dbValue < 0.1)  	newMidiValue = 0x0B; // LED 11 Orange (–3 dB)
+    //    else if (dbValue >= 0.1)                      	newMidiValue = 0x0E; // LED 12 Red    (> 0 dB)
+
+    //    if (newMidiValue > 0)
+    //        WindowsOutputDebugString("track=%d   midvalue=0x%02x\n", channelNumber_, newMidiValue);
+
+    //    return  newMidiValue;
+    //}
+};
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+class V1MMasterVUMeter_Midi_FeedbackProcessor : public Midi_FeedbackProcessor
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+{
+private:
+    int param_;
+
+public:
+    virtual ~V1MMasterVUMeter_Midi_FeedbackProcessor() {}
+    V1MMasterVUMeter_Midi_FeedbackProcessor(CSurfIntegrator* const csi, Midi_ControlSurface* surface, Widget* widget, int param) : Midi_FeedbackProcessor(csi, surface, widget), param_(param)
+    {
+    }
+
+    virtual const char* GetName() override { return "V1MMasterVUMeter_Midi_FeedbackProcessor"; }
+
+    virtual void ForceClear() override
+    {
+        const PropertyList properties;
+        ForceValue(properties, 0.0);
+    }
+
+    virtual void SetValue(const PropertyList& properties, double value) override
+    {
+        SendMidiMessage(0xd1, (param_ << 4) | GetMidiMeterValue(value), 0);
+    }
+
+    virtual void ForceValue(const PropertyList& properties, double value) override
+    {
+        ForceMidiMessage(0xd1, (param_ << 4) | GetMidiMeterValue(value), 0);
+    }
+
+    int GetMidiMeterValue(double value)
+    {
+        int      midiValue = 0;
+        double   dbValue = VAL2DB(normalizedToVol(value));
+        if (dbValue >= -60.1 && dbValue < -48.1)        midiValue = 0x01; // LED  1 Green  (–60 dB)
+        else if (dbValue >= -48.1 && dbValue < -42.1)   midiValue = 0x02; // LED  2 Green  (–48 dB)
+        else if (dbValue >= -42.1 && dbValue < -36.1)   midiValue = 0x03; // LED  3 Green  (–42 dB)
+        else if (dbValue >= -36.1 && dbValue < -30.1)   midiValue = 0x04; // LED  4 Green  (–36 dB)
+        else if (dbValue >= -30.1 && dbValue < -24.1)   midiValue = 0x05; // LED  5 Green  (–30 dB)
+        else if (dbValue >= -24.1 && dbValue < -18.1)   midiValue = 0x06; // LED  6 Green  (–24 dB)
+        else if (dbValue >= -18.1 && dbValue < -12.1)   midiValue = 0x07; // LED  7 Green  (–18 dB)
+        else if (dbValue >= -12.1 && dbValue < -9.1)    midiValue = 0x08; // LED  8 Orange (–12 dB)
+        else if (dbValue >= -9.1 && dbValue < -6.1)     midiValue = 0x09; // LED  9 Orange (–9  dB)
+        else if (dbValue >= -6.1 && dbValue < -3.1)     midiValue = 0x0A; // LED 10 Orange (–6  dB)
+        else if (dbValue >= -3.1 && dbValue < 0.1)      midiValue = 0x0B; // LED 11 Orange (–3  dB)
+        else if (dbValue >= 0.1)                        midiValue = 0x0E; // LED 12 Red    (> 0 dB)
+        return midiValue;
+    }
+};
+
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 class V1MTrackColors_Midi_FeedbackProcessor : public Midi_FeedbackProcessor
