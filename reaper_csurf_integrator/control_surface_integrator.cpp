@@ -723,12 +723,15 @@ void Midi_ControlSurface::ProcessMidiWidget(int &lineNumber, ifstream &surfaceTe
         //V1M Start
         else if (widgetType == "FB_V1MMasterVUMeter" && size == 2)
         {
-            widget->GetFeedbackProcessors().push_back(make_unique<V1MVUMeter_Midi_FeedbackProcessor>(csi_, this, widget, 0xd1, NULL, atoi(tokenLines[i][1].c_str())));
+            int displayType = NULL;
+            int code = 0xD1; //Master
+            widget->GetFeedbackProcessors().push_back(make_unique<V1MVUMeter_Midi_FeedbackProcessor>(csi_, this, widget, code, displayType, atoi(tokenLines[i][1].c_str())));
         }
         else if ((widgetType == "FB_V1MVUMeter" || widgetType == "FB_V1MXVUMeter") && size == 2) //Kev Smart
         {
-            int displayType = widgetType == "FB_V1MVUMeter" ? 0x14 : 0x15;
-            widget->GetFeedbackProcessors().push_back(make_unique<V1MVUMeter_Midi_FeedbackProcessor>(csi_, this, widget, 0xd0, displayType, atoi(tokenLines[i][1].c_str())));
+            int displayType = (widgetType == "FB_V1MVUMeter") ? 0x14 : 0x15;
+            int code = 0xD0; //Channel Strip
+            widget->GetFeedbackProcessors().push_back(make_unique<V1MVUMeter_Midi_FeedbackProcessor>(csi_, this, widget, code, displayType, atoi(tokenLines[i][1].c_str())));
             SetHasMCUMeters(displayType);
         }
         else if (widgetType == "FB_V1MTrackColors")
