@@ -2675,7 +2675,8 @@ public:
     V1MTrackColors_Midi_FeedbackProcessor(CSurfIntegrator* const csi, Midi_ControlSurface* surface, Widget* widget) :
         Midi_FeedbackProcessor(csi, surface, widget)
     {
-        g_debugLevel = DEBUG_LEVEL_DEBUG;
+        //g_debugLevel = DEBUG_LEVEL_DEBUG;
+
         preventUpdateTrackColors_ = false;
 
         rgba_Arr_.insert(make_pair("Black", rgb(0x00, 0x00, 0x00)));
