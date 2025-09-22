@@ -736,6 +736,10 @@ public:
             context->GetPage()->GoZone(name);
         else
             context->GetSurface()->GetZoneManager()->DeclareGoZone(name);
+
+        bool isActive = context->GetSurface()->GetZoneManager()->GetIsGoZoneActive(context->GetStringParam());
+        DAW::UpdateView(name, isActive, NULL);
+
     }
 };
 

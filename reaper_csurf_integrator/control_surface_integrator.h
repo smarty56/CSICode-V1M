@@ -1625,6 +1625,8 @@ public:
         ClearFXMapping();
         ResetOffsets();
 
+        DAW::SetHomeView();
+
         for (auto &goZone : goZones_)
             goZone->Deactivate();
         
@@ -3957,7 +3959,7 @@ public:
     const char *GetCurrentInputMonitorMode(MediaTrack *track) { return trackNavigationManager_->GetCurrentInputMonitorMode(track); }
     const vector<MediaTrack *> &GetSelectedTracks() { return trackNavigationManager_->GetSelectedTracks(); }
     
-    
+     
     /*
     int repeats = 0;
     
