@@ -794,6 +794,9 @@ public:
     int GetSlotIndex();
     void SetXTouchDisplayColors(const char *colors);
     void RestoreXTouchDisplayColors();
+    void SetV1MDisplayColors(const char* colors);
+    void RestoreV1MDisplayColors();
+
     void UpdateCurrentActionContextModifiers();
     
     const vector<unique_ptr<ActionContext>> &GetActionContexts(Widget *widget);
@@ -920,9 +923,11 @@ public:
     virtual void ForceUpdateTrackColors() {}
     virtual void RunDeferredActions() {}
     virtual void ForceClear() {}
-    
+
     virtual void SetXTouchDisplayColors(const char *colors) {}
     virtual void RestoreXTouchDisplayColors() {}
+    virtual void SetV1MDisplayColors(const char* colors, string const zone_name) {}
+    virtual void RestoreV1MDisplayColors() {}
 
     virtual void SetColorValue(const rgba_color &color) {}
 
@@ -1053,6 +1058,10 @@ public:
     void UpdateColorValue(const rgba_color &color);
     void SetXTouchDisplayColors(const char *colors);
     void RestoreXTouchDisplayColors();
+    void SetV1MDisplayColors(const char* colors, string const zone_name);
+    void RestoreV1MDisplayColors();
+
+
     void ForceClear();
 
     void SetHasDoublePressActions() { hasDoublePressActions_ = true; };

@@ -2701,11 +2701,19 @@ public:
 
     virtual const char* GetName() override { return "V1MTrackColors_Midi_FeedbackProcessor"; }
 
-    virtual void SetXTouchDisplayColors(const char* colors) override
+    virtual void SetV1MDisplayColors(const char* colors, string const zone_name) override
     {
         if (preventUpdateTrackColors_ == true) return;
 
         preventUpdateTrackColors_ = true;
+
+
+        //search "TrackFXMenu", "SelectedTrackFXMenu", "MasterTrackFXMenu"
+
+        MediaTrack* selectedTrack = GetSelectedTrack(NULL, 0); // DAW::GetSelectedTrack(0);
+        for (int i = 0; i < TrackFX_GetCount(selectedTrack); ++i)
+        {
+        }
 
         TrackColors_.clear();
         rgb color = rgba_Arr_.find(colors)->second; //this color is applied to all 8 tracks
@@ -2717,7 +2725,7 @@ public:
         SetTrackColors();
     }
 
-    virtual void RestoreXTouchDisplayColors() override
+    virtual void RestoreV1MDisplayColors() override
     {
         if (preventUpdateTrackColors_ == false) return;
 

@@ -1064,6 +1064,8 @@ void CSurfIntegrator::InitActionsDictionary()
     actions_.insert(make_pair("LeaveSubZone", make_unique<LeaveSubZone>()));
     actions_.insert(make_pair("SetXTouchDisplayColors", make_unique<SetXTouchDisplayColors>()));
     actions_.insert(make_pair("RestoreXTouchDisplayColors", make_unique<RestoreXTouchDisplayColors>()));
+    actions_.insert(make_pair("SetV1MDisplayColors", make_unique<SetV1MDisplayColors>()));
+    actions_.insert(make_pair("RestoreV1MDisplayColors", make_unique<RestoreV1MDisplayColors>()));
     actions_.insert(make_pair("GoFXSlot", make_unique<GoFXSlot>()));
     actions_.insert(make_pair("ShowFXSlot", make_unique<ShowFXSlot>()));
     actions_.insert(make_pair("HideFXSlot", make_unique<HideFXSlot>()));
@@ -2274,6 +2276,20 @@ void Zone::RestoreXTouchDisplayColors()
         widget->RestoreXTouchDisplayColors();
 }
 
+void Zone::SetV1MDisplayColors(const char* colors)
+{
+    for (auto& widget : widgets_)
+        widget->SetV1MDisplayColors(colors, name_);
+}
+
+void Zone::RestoreV1MDisplayColors()
+{
+    for (auto& widget : widgets_)
+        widget->RestoreV1MDisplayColors();
+}
+
+
+
 void Zone::DoAction(Widget *widget, bool &isUsed, double value)
 {
     if (! isActive_ || isUsed)
@@ -2339,7 +2355,7 @@ void Zone::DoRelativeAction(Widget *widget, bool &isUsed, int accelerationIndex,
     {
         isUsed = true;
 
-        for (auto &actionContext : GetActionContexts(widget))
+       for (auto &actionContext : GetActionContexts(widget))
             actionContext->DoRelativeAction(accelerationIndex, delta);
     }
     else
@@ -2494,6 +2510,19 @@ void Widget::RestoreXTouchDisplayColors()
     for (auto &feedbackProcessor : feedbackProcessors_)
         feedbackProcessor->RestoreXTouchDisplayColors();
 }
+
+void Widget::SetV1MDisplayColors(const char* colors, string const zone_name)
+{
+    for (auto& feedbackProcessor : feedbackProcessors_)
+        feedbackProcessor->SetV1MDisplayColors(colors, zone_name);
+}
+
+void Widget::RestoreV1MDisplayColors()
+{
+    for (auto& feedbackProcessor : feedbackProcessors_)
+        feedbackProcessor->RestoreV1MDisplayColors();
+}
+
 
 void  Widget::ForceClear()
 {
@@ -3526,18 +3555,18 @@ void ControlSurface::UpdateTrackColors()
 
 rgba_color ControlSurface::GetTrackColorForChannel(int channel)
 {
-    rgba_color white;
-    white.r = 255;
-    white.g = 255;
-    white.b = 255;
+    rgba_color black;
+    black.r = 0;
+    black.g = 0;
+    black.b = 0;
 
     if (channel < 0 || channel >= numChannels_)
-        return white;
+        return black;
     
     if (MediaTrack *track = page_->GetNavigatorForChannel(channel + channelOffset_)->GetTrack())
         return DAW::GetTrackColor(track);
     else
-        return white;
+        return black;
 }
 
 void ControlSurface::RequestUpdate()
