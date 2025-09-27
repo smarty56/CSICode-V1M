@@ -1,8 +1,8 @@
 # CSI Code Specifically Modified for the Icon V1-M Surface
+## The Major Changes
 
-## Essentially I have created four new classes specifically for the V1-M.
+**Four new classes. (control_surface_midi_widgets.h)**
 
-**control_surface_midi_widgets.h ....**
 ```
 	class V1MDisplay_Midi_FeedbackProcessor : public Midi_FeedbackProcessor
 
@@ -15,12 +15,10 @@
        channel strip VU = 0xD0 and MasterVU = 0xD1)
 ```
 
-## The new classes are linked to the new widgets
-
-**control_surface_integrator.cpp .....**
+**Widgets linked to the new classes (control_surface_integrator.cpp)**
 
 ```
-        else if (widgetType == "FB_V1MMasterVUMeter" && size == 2)
+	    else if (widgetType == "FB_V1MMasterVUMeter" && size == 2)
         {
             int displayType = NULL;
             int code = 0xD1; //Master
@@ -53,8 +51,7 @@
         }
 ```
 
-## The New widgets
-**Surface.txt....**
+**The New widgets (Surface.txt)**
 ```
 Widget TrackColors
 	FB_V1MTrackColors
@@ -109,7 +106,6 @@ Widget VUMeter8
 WidgetEnd
 ```
 
-## There are proably more things to mention which I will add in time
 
 
 
