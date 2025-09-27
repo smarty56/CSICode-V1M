@@ -1,4 +1,4 @@
-# CSI Code Specificall Targeted for the Icon V1-M Surface
+# CSI Code Specifically Modified for the Icon V1-M Surface
 
 ## Essentially I have created four new classes specifically for the V1-M.
 
