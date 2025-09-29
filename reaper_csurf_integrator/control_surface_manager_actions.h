@@ -143,32 +143,32 @@ public:
 };
 
 
-class SetV1MDisplayColors : public Action
+class OverrideTrackColors : public Action
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 {
 public:
-    virtual const char* GetName() override { return "SetV1MDisplayColors"; }
+    virtual const char* GetName() override { return "OverrideTrackColors"; }
 
     void Do(ActionContext* context, double value) override
     {
         if (value == ActionContext::BUTTON_RELEASE_MESSAGE_VALUE) return;
 
-        context->GetZone()->SetV1MDisplayColors(context->GetStringParam());
+        context->GetZone()->OverrideTrackColors(context->GetStringParam());
     }
 };
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-class RestoreV1MDisplayColors : public Action
+class RestoreTrackColors : public Action
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 {
 public:
-    virtual const char* GetName() override { return "RestoreV1MDisplayColors"; }
+    virtual const char* GetName() override { return "RestoreTrackColors"; }
 
     void Do(ActionContext* context, double value) override
     {
         if (value == ActionContext::BUTTON_RELEASE_MESSAGE_VALUE) return;
 
-        context->GetZone()->RestoreV1MDisplayColors();
+        context->GetZone()->RestoreTrackColors();
     }
 };
 

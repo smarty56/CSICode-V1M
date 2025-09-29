@@ -2662,7 +2662,7 @@ private:
     map<string, rgb>  rgba_Arr_;
     vector<rgba_color> TrackColors_;
 
-    struct
+    struct SysexHeader
     {
         MIDI_event_ex_t evt;
         char data[28]; //allocate extra data for this Sysex + 1
@@ -2701,7 +2701,7 @@ public:
 
     virtual const char* GetName() override { return "V1MTrackColors_Midi_FeedbackProcessor"; }
 
-    virtual void SetV1MDisplayColors(const char* colors, string const zone_name) override
+    virtual void OverrideTrackColors(const char* colors, string const zone_name) override
     {
         if (preventUpdateTrackColors_ == true) return;
 
@@ -2725,7 +2725,7 @@ public:
         SetTrackColors();
     }
 
-    virtual void RestoreV1MDisplayColors() override
+    virtual void RestoreTrackColors() override
     {
         if (preventUpdateTrackColors_ == false) return;
 
@@ -2790,7 +2790,7 @@ private:
     int channel_;
     string lastStringSent_;
 
-    struct
+    struct SysexHeader
     {
         MIDI_event_ex_t evt;
         char data[12]; //allocate extra data for this Sysex + 1

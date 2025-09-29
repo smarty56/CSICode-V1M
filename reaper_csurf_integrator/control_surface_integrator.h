@@ -794,8 +794,8 @@ public:
     int GetSlotIndex();
     void SetXTouchDisplayColors(const char *colors);
     void RestoreXTouchDisplayColors();
-    void SetV1MDisplayColors(const char* colors);
-    void RestoreV1MDisplayColors();
+    void OverrideTrackColors(const char* colors);
+    void RestoreTrackColors();
 
     void UpdateCurrentActionContextModifiers();
     
@@ -926,8 +926,8 @@ public:
 
     virtual void SetXTouchDisplayColors(const char *colors) {}
     virtual void RestoreXTouchDisplayColors() {}
-    virtual void SetV1MDisplayColors(const char* colors, string const zone_name) {}
-    virtual void RestoreV1MDisplayColors() {}
+    virtual void OverrideTrackColors(const char* colors, string const zone_name) {}
+    virtual void RestoreTrackColors() {}
 
     virtual void SetColorValue(const rgba_color &color) {}
 
@@ -1058,8 +1058,8 @@ public:
     void UpdateColorValue(const rgba_color &color);
     void SetXTouchDisplayColors(const char *colors);
     void RestoreXTouchDisplayColors();
-    void SetV1MDisplayColors(const char* colors, string const zone_name);
-    void RestoreV1MDisplayColors();
+    void OverrideTrackColors(const char* colors, string const zone_name);
+    void RestoreTrackColors();
 
 
     void ForceClear();
