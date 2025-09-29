@@ -1064,8 +1064,8 @@ void CSurfIntegrator::InitActionsDictionary()
     actions_.insert(make_pair("LeaveSubZone", make_unique<LeaveSubZone>()));
     actions_.insert(make_pair("SetXTouchDisplayColors", make_unique<SetXTouchDisplayColors>()));
     actions_.insert(make_pair("RestoreXTouchDisplayColors", make_unique<RestoreXTouchDisplayColors>()));
-    actions_.insert(make_pair("SetV1MDisplayColors", make_unique<SetV1MDisplayColors>()));
-    actions_.insert(make_pair("RestoreV1MDisplayColors", make_unique<RestoreV1MDisplayColors>()));
+    actions_.insert(make_pair("OverrideTrackColors", make_unique<OverrideTrackColors>()));
+    actions_.insert(make_pair("RestoreTrackColors", make_unique<RestoreTrackColors>()));
     actions_.insert(make_pair("GoFXSlot", make_unique<GoFXSlot>()));
     actions_.insert(make_pair("ShowFXSlot", make_unique<ShowFXSlot>()));
     actions_.insert(make_pair("HideFXSlot", make_unique<HideFXSlot>()));
@@ -2276,16 +2276,16 @@ void Zone::RestoreXTouchDisplayColors()
         widget->RestoreXTouchDisplayColors();
 }
 
-void Zone::SetV1MDisplayColors(const char* colors)
+void Zone::OverrideTrackColors(const char* colors)
 {
     for (auto& widget : widgets_)
-        widget->SetV1MDisplayColors(colors, name_);
+        widget->OverrideTrackColors(colors, name_);
 }
 
-void Zone::RestoreV1MDisplayColors()
+void Zone::RestoreTrackColors()
 {
     for (auto& widget : widgets_)
-        widget->RestoreV1MDisplayColors();
+        widget->RestoreTrackColors();
 }
 
 
@@ -2511,16 +2511,16 @@ void Widget::RestoreXTouchDisplayColors()
         feedbackProcessor->RestoreXTouchDisplayColors();
 }
 
-void Widget::SetV1MDisplayColors(const char* colors, string const zone_name)
+void Widget::OverrideTrackColors(const char* colors, string const zone_name)
 {
     for (auto& feedbackProcessor : feedbackProcessors_)
-        feedbackProcessor->SetV1MDisplayColors(colors, zone_name);
+        feedbackProcessor->OverrideTrackColors(colors, zone_name);
 }
 
-void Widget::RestoreV1MDisplayColors()
+void Widget::RestoreTrackColors()
 {
     for (auto& feedbackProcessor : feedbackProcessors_)
-        feedbackProcessor->RestoreV1MDisplayColors();
+        feedbackProcessor->RestoreTrackColors();
 }
 
 
